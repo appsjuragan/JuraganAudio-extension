@@ -1,7 +1,7 @@
 .center {
-    margin-left : auto;
-    margin-right : auto;
-	display : block;
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
 }
 
 #mainDiv {
@@ -12,7 +12,7 @@
 /*
  * TABS
  */
-#mainDiv > input {
+#mainDiv>input {
 	height: 1.2em;
 	visibility: hidden;
 }
@@ -39,11 +39,11 @@
 	margin-left: 33px;
 }
 
-#mainDiv input:hover + label {
+#mainDiv input:hover+label {
 	background: #756A56;
 }
 
-#mainDiv input:checked + label {
+#mainDiv input:checked+label {
 	background-color: wheat;
 	color: #2C3E50;
 	position: relative;
@@ -54,7 +54,7 @@
 	-ms-transition: .1s;
 }
 
-#mainDiv > div {
+#mainDiv>div {
 	opacity: 0;
 	z-index: -100;
 	transition: all linear 0.1s;
@@ -67,12 +67,12 @@
 	overflow: hidden !important;
 }
 
-#mainDiv input#tab-1:checked ~ #eqDiv,
-#mainDiv input#tab-2:checked ~ #guideDiv,
-#mainDiv input#tab-3:checked ~ #tabsDiv,
-#mainDiv input#tab-4:checked ~ #proDiv {
-    opacity: 1;
-    z-index: 100;
+#mainDiv input#tab-1:checked~#eqDiv,
+#mainDiv input#tab-2:checked~#guideDiv,
+#mainDiv input#tab-3:checked~#tabsDiv,
+#mainDiv input#tab-4:checked~#proDiv {
+	opacity: 1;
+	z-index: 100;
 }
 
 #guideDiv {
@@ -110,40 +110,42 @@
 }
 
 input.visible {
-  visibility: visible !important;
+	visibility: visible !important;
 }
 
-#eqSvg, #gainSvg {
+#eqSvg,
+#gainSvg {
 	display: inline;
 }
 
 #eqTabList {
-    clear : both;
+	clear: both;
 }
 
 #filterButtonsDiv {
-    float : right;
-    margin-bottom : 10px;
+	float: right;
+	margin-bottom: 10px;
 }
 
 #filterButtonsDiv button {
-    margin-left : 5px;
+	margin-left: 5px;
 }
 
 #presetDiv button {
-    margin-left : 5px;
+	margin-left: 5px;
 	margin-bottom: 5px;
 }
 
 #presetDiv {
-    float : right;
-    margin-bottom : 10px;
-    clear: both;
+	float: right;
+	margin-bottom: 10px;
+	clear: both;
 }
 
-#eqTabList span, #infoDiv {
-    color : wheat;
-    margin-left : 5px;
+#eqTabList span,
+#infoDiv {
+	color: wheat;
+	margin-left: 5px;
 }
 
 #proDiv {
@@ -155,69 +157,76 @@ input.visible {
 }
 
 .tabFavIcon {
-    max-height : 16px;
-    max-width : 16px;
-    float : right;
-    margin-left : 4px;
+	max-height: 16px;
+	max-width: 16px;
+	float: right;
+	margin-left: 4px;
 }
 
 body {
-    background-color : #2C3E50;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    min-width : 640px;
+	background-color: #2C3E50;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	min-width: 640px;
 }
 
 html {
-    min-height : 500px;
+	min-height: 500px;
 }
 
-h1,h2,h3,#pl,#lt {
-    color : wheat;
+h1,
+h2,
+h3,
+#pl,
+#lt {
+	color: wheat;
 }
 
 #lt {
-    line-height : 1.5;
+	line-height: 1.5;
 }
 
 #pl {
-    color : wheat;
-    outline : none;
-    display : none;
-    font-size : 14px;
+	color: wheat;
+	outline: none;
+	display: none;
+	font-size: 14px;
 }
 
-#presetNameInput, button {
-    background-color : #2C3E50;
-    color : wheat;
-    outline : none;
-    border-width : 1px;
-    border-color : wheat;
-    border-style : solid;
+#presetNameInput,
+button {
+	background-color: #2C3E50;
+	color: wheat;
+	outline: none;
+	border-width: 1px;
+	border-color: wheat;
+	border-style: solid;
 	border-radius: 2px;
 }
 
 #presetNameInput {
-    height: 20px;
-    width: 75px;
+	height: 20px;
+	width: 75px;
 }
 
 #importPresetsFile {
 	display: none;
 }
 
-em, a, body {
-    color : wheat;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+em,
+a,
+body {
+	color: wheat;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 
 #amzDiv {
@@ -227,14 +236,14 @@ em, a, body {
 }
 
 a.button {
-    background-color : #2C3E50;
-    border-width : 1px;
+	background-color: #2C3E50;
+	border-width: 1px;
 	color: wheat;
-    border-color : wheat;
-    border-style : solid;
+	border-color: wheat;
+	border-style: solid;
 	padding: 3px;
 
-    text-decoration: none;
+	text-decoration: none;
 }
 
 form {
@@ -242,40 +251,43 @@ form {
 }
 
 a:focus {
-    outline: 0;
+	outline: 0;
 }
 
-button :focus {
+button :focus {}
 
-}
-#warning, #contactInfo {
-    margin-left : auto;
-    margin-right : 5px;
-    float : right;
-    clear: both;
+#warning,
+#contactInfo {
+	margin-left: auto;
+	margin-right: 5px;
+	float: right;
+	clear: both;
 }
 
 .filterDot {
-    pointer-events : all;
+	pointer-events: all;
 }
+
 .filterDot:hover {
-    stroke : white;
-    stroke-width : 2px;
+	stroke: white;
+	stroke-width: 2px;
 }
 
 .gainLine {
-    stroke-width: 5px;
-}
-.gainLine:hover {
-    stroke: white;
+	stroke-width: 5px;
 }
 
-#infoDiv{
-    float:right;
+.gainLine:hover {
+	stroke: white;
+}
+
+#infoDiv {
+	float: right;
 	margin-bottom: 5px;
 }
+
 #paypal {
-    display: inline;
+	display: inline;
 }
 
 #eqThisTabDiv {
@@ -290,7 +302,7 @@ button :focus {
 
 #vizButton {
 	font-size: 10px;
-	-webkit-transform: rotate(-90deg);   
+	-webkit-transform: rotate(-90deg);
 	-moz-transform: rotate(-90deg);
 	-ms-transform: rotate(-90deg);
 	-o-transform: rotate(-90deg);
@@ -298,22 +310,22 @@ button :focus {
 }
 
 #vizButton.on {
-    background-color : wheat;
-    color : #2C3E50;
-    outline : none;
-    border-width : 1px;
-    border-color : wheat;
-    border-style : solid;
+	background-color: wheat;
+	color: #2C3E50;
+	outline: none;
+	border-width: 1px;
+	border-color: wheat;
+	border-style: solid;
 }
 
 #requiresProDiv {
 	position: absolute;
 	top: 102px;
-    left: 100px;
-    z-index: 1000;
-    width: 484px;
-    text-align: center;
-    pointer-events: none;
+	left: 100px;
+	z-index: 1000;
+	width: 484px;
+	text-align: center;
+	pointer-events: none;
 	opacity: 0;
 	transition: all linear 0.2s;
 }
@@ -321,10 +333,10 @@ button :focus {
 #upgradeExtensionDiv {
 	position: absolute;
 	top: 102px;
-    left: 100px;
-    width: 484px;
-    text-align: center;
-    pointer-events: none;
+	left: 100px;
+	width: 484px;
+	text-align: center;
+	pointer-events: none;
 	transition: all linear 0.2s;
 }
 

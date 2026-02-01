@@ -2,21 +2,15 @@ var _gaq = _gaq || [];
 
 function scope() {
     var e = chrome.runtime.getManifest().version;
-    _gaq.push(["_setAccount", "UA-64913318-2"]);
-    _gaq.push(["_trackPageview"]);
-    _gaq.push(["_trackEvent", "popupOpen", e]);
+    // Analytics removed per user request
+
 
     var t = localStorage;
     var p = null;
 
-    (function () {
-        var e = document.createElement("script");
-        e.type = "text/javascript";
-        e.async = true;
-        e.src = "https://ssl.google-analytics.com/ga.js";
-        var t = document.getElementsByTagName("script")[0];
-        t.parentNode.insertBefore(e, t);
-    })();
+    var t = localStorage;
+    var p = null;
+
 
     var N = function () { };
 
@@ -149,9 +143,12 @@ function scope() {
                 g.click();
             }
         }
-        if (window.innerWidth && window.innerWidth > 1e3) {
+        if (window.innerWidth && window.innerWidth > 1000) {
             document.getElementById("fullscreen-link").style.display = "none";
         }
+
+        // Ensure visualizer stream starts if it was already on
+        h();
     });
 
     function n() {
@@ -210,15 +207,14 @@ function scope() {
         }
     });
 
-    function U(e) {
-        if (S) {
-            var t = 1e3 / 30 - (performance.now() - S);
-            if (t > 0) {
-                setTimeout(h, t);
-                return;
-            }
+    const fftChannel = new BroadcastChannel('ears_fft');
+    fftChannel.onmessage = (event) => {
+        if (event.data.type === 'fft') {
+            U(event.data);
         }
-        S = performance.now();
+    };
+
+    function U(e) {
         if (C) {
             C.remove();
         }
@@ -272,12 +268,19 @@ function scope() {
                 "pointer-events": "none"
             });
         }
-        h();
     }
 
     function h() {
-        chrome.runtime.sendMessage({ type: "getFFT" }, U);
+        if (y()) {
+            fftChannel.postMessage({ type: 'startFFT' });
+        } else {
+            fftChannel.postMessage({ type: 'stopFFT' });
+        }
     }
+
+    window.addEventListener('unload', () => {
+        fftChannel.postMessage({ type: 'stopFFT' });
+    });
 
     function j(e) {
         var t = e.presets;
@@ -300,7 +303,22 @@ function scope() {
     }
 
     function a() {
-        chrome.runtime.sendMessage({ type: "eqTab", on: true });
+        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+            var currentTabId = tabs[0].id;
+            // MV3 requires getting stream ID from a user gesture (popup interaction)
+            chrome.tabCapture.getMediaStreamId({ targetTabId: currentTabId }, function (streamId) {
+                if (chrome.runtime.lastError) {
+                    console.error("Error getting stream ID: " + chrome.runtime.lastError.message);
+                    return;
+                }
+                chrome.runtime.sendMessage({
+                    type: "eqTab",
+                    on: true,
+                    streamId: streamId,
+                    tabId: currentTabId
+                });
+            });
+        });
     }
 
     function W() {
