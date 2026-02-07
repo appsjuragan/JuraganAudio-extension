@@ -27,6 +27,7 @@ export function init(onLimiterUpdate) {
     fftChannel = new BroadcastChannel(FFT_CHANNEL_NAME);
     fftChannel.onmessage = (event) => {
         if (event.data.type === 'fft') {
+            // console.log("Popup received FFT data length:", event.data.fft.length);
             updateVisualizer(event.data);
             if (event.data.limiterReduction !== undefined && limiterCallback) {
                 limiterCallback(event.data.limiterReduction);
@@ -84,116 +85,116 @@ function P(e) {
 export function updateVisualizer(data) {
     if (!isVisualizerOn()) return;
 
+    const n = data.fft || data.data;
+    if (!n || n.length === 0) return;
+
+    // Ensure we have Snap instance
+    if (!I) {
+        if (typeof Snap !== 'undefined') I = Snap("#eqSvg");
+        if (!I) return;
+    }
+
     // Remove old polyline
     if (C) {
         C.remove();
         C = null;
     }
 
-    // Ensure we have Snap instance
-    if (!I) {
-        if (typeof Snap !== 'undefined') I = Snap("#eqSvg");
-        else return;
+    const isLight = document.body.classList.contains("light-mode");
+    const topColor = isLight ? "#4f46e5" : "#22d3ee";
+    const midColor = "#818cf8";
+    const bottomColor = isLight ? "rgba(79, 70, 229, 0.1)" : "rgba(255, 255, 255, 0.1)";
+
+    const strokeGradient = I.gradient(`L(0, 0, 0, ${B})${topColor}-${midColor}-${bottomColor}`).attr({
+        gradientUnits: "userSpaceOnUse"
+    });
+
+    var r = [];
+
+    // Helper map Y (0 to B)
+    // dB -100 -> B (bottom)
+    // dB 0 -> 0 (top)
+    // Actually original Logic:
+    // var c = ((n[i] + 100) / 100) * B;
+    // n[i] is dB? If so -100+100=0 -> 0?
+    // Wait, c is height from bottom?
+    // Svg coords: 0 is top, B is bottom.
+    // Original code used `a(e) { return B - 1 - e; }` to flip Y.
+
+    function a(e) {
+        return B - 1 - e;
     }
 
-    const n = data.data || data.fft;
-    if (I && n && n.length > 0) {
-        const isLight = document.body.classList.contains("light-mode");
-        const topColor = isLight ? "#4f46e5" : "#22d3ee";
-        const midColor = "#818cf8";
-        const bottomColor = isLight ? "rgba(79, 70, 229, 0.1)" : "rgba(255, 255, 255, 0.1)";
+    // Process data points
+    // n.length is usually fftSize/2 (e.g. 4096)
+    // Iterate and map to X, Y
 
-        const strokeGradient = I.gradient(`L(0, 0, 0, ${B})${topColor}-${midColor}-${bottomColor}`).attr({
-            gradientUnits: "userSpaceOnUse"
-        });
+    for (let i = 0; i < n.length; i++) {
+        // Frequency for bin i
+        // freq = i * SampleRate / (fftSize)
+        // But we don't have fftSize here, we have n.length which is half fftSize
+        // So i * SampleRate / (n.length * 2)
 
-        var r = [];
+        var o = (i * E) / (n.length * 2); // Frequency
 
-        // Helper map Y (0 to B)
-        // dB -100 -> B (bottom)
-        // dB 0 -> 0 (top)
-        // Actually original Logic:
-        // var c = ((n[i] + 100) / 100) * B;
-        // n[i] is dB? If so -100+100=0 -> 0?
-        // Wait, c is height from bottom?
-        // Svg coords: 0 is top, B is bottom.
-        // Original code used `a(e) { return B - 1 - e; }` to flip Y.
+        if (o < 10) continue; // Skip very low freq
 
-        function a(e) {
-            return B - 1 - e;
-        }
+        var s = P(o); // X position
+        if (s > T) break; // Off screen
 
-        // Process data points
-        // n.length is usually fftSize/2 (e.g. 4096)
-        // Iterate and map to X, Y
+        // Y position
+        // n[i] is dB, typically -100 to 0
+        // Normalize to 0..B range
+        // c = value from 0 to B
+        var db = n[i];
 
-        for (let i = 0; i < n.length; i++) {
-            // Frequency for bin i
-            // freq = i * SampleRate / (fftSize)
-            // But we don't have fftSize here, we have n.length which is half fftSize
-            // So i * SampleRate / (n.length * 2)
+        // Clamp db -100 to 0 implicitly by the math or explicit
+        if (db < -100) db = -100;
+        if (db > 0) db = 0;
 
-            var o = (i * E) / (n.length * 2); // Frequency
+        var c = ((db + 100) / 100) * B;
+        // example: 0dB -> 100/100 * B = B (Full height bar)
+        // example: -100dB -> 0/100 * B = 0
 
-            if (o < 10) continue; // Skip very low freq
-
-            var s = P(o); // X position
-            if (s > T) break; // Off screen
-
-            // Y position
-            // n[i] is dB, typically -100 to 0
-            // Normalize to 0..B range
-            // c = value from 0 to B
-            var db = n[i];
-
-            // Clamp db -100 to 0 implicitly by the math or explicit
-            if (db < -100) db = -100;
-            if (db > 0) db = 0;
-
-            var c = ((db + 100) / 100) * B;
-            // example: 0dB -> 100/100 * B = B (Full height bar)
-            // example: -100dB -> 0/100 * B = 0
-
-            r.push([s, c]);
-        }
-
-        // Smooth/Decimate points (simple algorithm from original)
-        var u = [];
-        for (let i = 0; i < r.length; i++) {
-            var l = r[i];
-            if (u.length == 0) {
-                u.push(l);
-                continue;
-            }
-            var last = u[u.length - 1];
-            var v = 2; // pixel threshold
-
-            // If x difference is small, take max y
-            if (l[0] - last[0] < v) {
-                if (l[1] > last[1]) {
-                    last[1] = l[1];
-                }
-            } else {
-                u.push(l);
-            }
-        }
-
-        // Convert to flat array for polyline [x1, y1, x2, y2...]
-        // And remember to flip Y using a() because SVG 0 is top
-        // c was amplitude (0 to B), so a(c) converts to SVG Y
-        var d = [];
-        for (let i = 0; i < u.length; i++) {
-            var f = u[i];
-            d.push(f[0]);
-            d.push(a(f[1]));
-        }
-
-        // Draw
-        C = I.polyline(d).attr({
-            "fill-opacity": "0",
-            stroke: strokeGradient,
-            "pointer-events": "none",
-            "stroke-width": 2
-        });
+        r.push([s, c]);
     }
+
+    // Smooth/Decimate points (simple algorithm from original)
+    var u = [];
+    for (let i = 0; i < r.length; i++) {
+        var l = r[i];
+        if (u.length == 0) {
+            u.push(l);
+            continue;
+        }
+        var last = u[u.length - 1];
+        var v = 2; // pixel threshold
+
+        // If x difference is small, take max y
+        if (l[0] - last[0] < v) {
+            if (l[1] > last[1]) {
+                last[1] = l[1];
+            }
+        } else {
+            u.push(l);
+        }
+    }
+
+    // Convert to flat array for polyline [x1, y1, x2, y2...]
+    // And remember to flip Y using a() because SVG 0 is top
+    // c was amplitude (0 to B), so a(c) converts to SVG Y
+    var d = [];
+    for (let i = 0; i < u.length; i++) {
+        var f = u[i];
+        d.push(f[0]);
+        d.push(a(f[1]));
+    }
+
+    // Draw
+    C = I.polyline(d).attr({
+        "fill-opacity": "0",
+        stroke: strokeGradient,
+        "pointer-events": "none",
+        "stroke-width": 2
+    });
 }

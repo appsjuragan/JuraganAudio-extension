@@ -294,13 +294,16 @@ function fftLoop() {
 
 // Listen for FFT start/stop requests from popup
 fftChannel.onmessage = (event) => {
+    console.log("Offscreen FFT Channel msg:", event.data.type);
     if (event.data.type === 'startFFT') {
         if (!fftLoopRunning) {
             fftLoopRunning = true;
+            console.log("Starting FFT Loop...");
             fftLoop();
         }
     } else if (event.data.type === 'stopFFT') {
         fftLoopRunning = false;
+        console.log("Stopping FFT Loop.");
     }
 };
 
