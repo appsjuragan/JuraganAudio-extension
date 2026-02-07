@@ -7,7 +7,7 @@ const m = "wheat";
 const q = "#2C3E50";
 const E = 48000; // Sample Rate (updated to match AudioContext)
 const T = 600; // Width
-const B = 300; // Height
+const B = 360; // Height
 
 let fftChannel = null;
 let limiterCallback = null;
@@ -102,7 +102,8 @@ export function updateVisualizer(data) {
         // l(x1, y1, x2, y2)
         // Gradient: Top (Red) -> Mid (Yellow) -> Bottom (Green)
         // L(x1, y1, x2, y2) absolute with userSpaceOnUse to tie to Volume axis
-        const strokeGradient = I.gradient("L(0, 0, 0, " + B + ")#ff3333-#ffff33-#33ff33").attr({
+        // Gradient: Top (Cyan) -> Mid (Indigo) -> Bottom (Dark Indigo)
+        const strokeGradient = I.gradient("L(0, 0, 0, " + B + ")#22d3ee-#818cf8-#ffffff").attr({
             gradientUnits: "userSpaceOnUse"
         });
 

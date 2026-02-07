@@ -1,531 +1,547 @@
-.center {
-	margin-left: auto;
-	margin-right: auto;
-	display: block;
+:root {
+	/* "Future Neon" Palette */
+	--bg-void: #090a0c;
+	--bg-glass: rgba(22, 24, 29, 0.7);
+	--bg-glass-border: rgba(255, 255, 255, 0.08);
+
+	--color-primary: #818cf8;
+	/* Soft Indigo */
+	--color-primary-glow: rgba(129, 140, 248, 0.4);
+
+	--color-accent: #22d3ee;
+	/* Cyan */
+	--color-accent-glow: rgba(34, 211, 238, 0.4);
+
+	--text-main: #f3f4f6;
+	--text-muted: #9ca3af;
+
+	--gradient-main: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+
+	--font-family: 'Inter', system-ui, -apple-system, sans-serif;
+
+	--anim-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Reset & Base */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+/* Ensure body handles height */
+body {
+	margin: 0;
+	background: var(--bg-void);
+	color: var(--text-main);
+	font-family: var(--font-family);
+	/* min-width: 640px; */
+	width: 670px;
+	/* Increased to 670px to add ~20px margins side-by-side with 630px content */
+	min-height: fit-content;
+	overflow: hidden;
+	/* Hide scrollbars if content fits */
+	display: flex;
+	flex-direction: column;
+}
+
+/* Adjust MainDiv to not be fixed height if possible, or just fixed */
 #mainDiv {
 	position: relative;
-	height: 325px;
+	height: 450px;
+	/* Increased to fit 360px SVG + 80px padding */
+	flex-shrink: 0;
+	background: radial-gradient(circle at 50% -20%, #1e1b4b 0%, var(--bg-void) 60%);
 }
 
-/*
- * TABS
- */
-#mainDiv>input {
-	height: 1.2em;
-	visibility: hidden;
+a {
+	color: var(--color-accent);
+	text-decoration: none;
+	transition: color var(--anim-fast);
 }
 
-#mainDiv label {
-	background: #2C3E50;
-	border-color: wheat;
-	border-style: solid;
-	border-width: 1px;
-	border-radius: .5em .5em 0 0;
-	color: wheat;
-	cursor: pointer;
-	display: block;
-	float: left;
-	font-size: 1em;
-	height: 1.5em;
-	line-height: 1.5em;
-	margin-right: .25em;
-	padding: 0 0.5em;
-	text-align: center;
+a:hover {
+	color: var(--color-primary);
 }
 
-#label-1 {
-	margin-left: 33px;
-}
-
-#mainDiv input:hover+label {
-	background: #756A56;
-}
-
-#mainDiv input:checked+label {
-	background-color: wheat;
-	color: #2C3E50;
+/* Header */
+body>h1 {
 	position: relative;
-	z-index: 6;
-	-webkit-transition: .1s;
-	-moz-transition: .1s;
-	-o-transition: .1s;
-	-ms-transition: .1s;
-	transition: .1s;
+	/* Context for centered tabs */
+	padding: 10px 24px;
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	background: rgba(9, 10, 12, 0.8);
+	backdrop-filter: blur(10px);
+	border-bottom: 1px solid var(--bg-glass-border);
+	margin: 0;
+	z-index: 50;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 
-#mainDiv>div {
-	opacity: 0;
-	z-index: -100;
-	transition: all linear 0.1s;
-	height: 305px;
-	width: 635px;
+/* Top Right Links */
+#warning,
+#contactInfo {
+	font-size: 11px;
+	color: var(--text-muted);
+	display: none;
+	/* Simplify UI, move to guide or tooltips if needed to reduce clutter */
+}
+
+/* Re-enable if critical, but for "Premium" look, less is more */
+
+
+
+/* Tabs logic */
+body>input[type="radio"] {
+	display: none;
+}
+
+/* Tab Navigation Container - Now in Header */
+#tabNav {
 	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 20;
+
+	display: flex;
+	background: rgba(255, 255, 255, 0.05);
+	/* Keep pill background */
+	border: 1px solid var(--bg-glass-border);
+	border-radius: 99px;
+	padding: 2px;
+	/* Smaller padding */
+	gap: 0;
 }
 
+/* Individual Tab Pills */
+#tabNav label {
+	padding: 4px 12px;
+	/* Slightly smaller */
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--text-muted);
+	cursor: pointer;
+	border-radius: 99px;
+	background: transparent;
+	transition: all var(--anim-fast);
+	user-select: none;
+	text-align: center;
+	white-space: nowrap;
+
+	/* Ensure no legacy margins/transforms */
+	margin: 0;
+	transform: none;
+	left: auto;
+	width: auto;
+	border: none;
+}
+
+/* Active State Styles */
+/* Inputs are now at body root, h1 is sibling */
+body>input#tab-1:checked~h1 #tabNav label[for="tab-1"],
+body>input#tab-2:checked~h1 #tabNav label[for="tab-2"],
+body>input#tab-3:checked~h1 #tabNav label[for="tab-3"] {
+	background: rgba(255, 255, 255, 0.15);
+	color: var(--text-main);
+	box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+	/* Glow effect */
+}
+
+#tabNav label:hover {
+	color: var(--text-main);
+	background: rgba(255, 255, 255, 0.05);
+}
+
+/* EQ Area */
 #eqDiv {
-	overflow: hidden !important;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	/* Use flex to center SVGs horizontally, but align top vertically */
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding-top: 5px;
+	/* Tabs are in header now, move to top */
+	z-index: 10;
+
+	/* Visibility Control */
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.3s ease;
 }
 
-#mainDiv input#tab-1:checked~#eqDiv,
-#mainDiv input#tab-2:checked~#guideDiv,
-#mainDiv input#tab-3:checked~#tabsDiv,
-#mainDiv input#tab-4:checked~#proDiv {
+#eqDiv svg {
+	display: block;
+	/* vertical-align removed due to block display */
+}
+
+#guideDiv,
+#tabsDiv {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.3s ease;
+	padding-top: 60px;
+	/* Space for tabs */
+	z-index: 10;
+	background: var(--bg-void);
+}
+
+/* Content visibility - targeted via body inputs -> #mainDiv -> content */
+body>input#tab-1:checked~#mainDiv #eqDiv,
+body>input#tab-2:checked~#mainDiv #guideDiv,
+body>input#tab-3:checked~#mainDiv #tabsDiv {
 	opacity: 1;
-	z-index: 100;
+	pointer-events: auto;
 }
 
-#guideDiv {
-	overflow: scroll;
+/* Indicators */
+#limiterIndicator,
+#sbrIndicator {
+	position: absolute;
+	top: 18px;
+	right: 24px;
+	font-size: 10px;
+	font-weight: 700;
+	padding: 4px 8px;
+	border-radius: 6px;
+	background: rgba(255, 255, 255, 0.03);
+	color: var(--text-muted);
+	opacity: 0.3;
+	border: 1px solid transparent;
+	transition: all 0.3s;
+	z-index: 50;
 }
 
-#guideDiv p {
-	margin-top: 5px;
-	margin-bottom: 15px;
+#sbrIndicator {
+	right: 70px;
+}
+
+#limiterIndicator.active {
+	background: rgba(239, 68, 68, 0.15);
+	color: #f87171;
+	border-color: rgba(239, 68, 68, 0.3);
+	opacity: 1;
+	box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+#sbrIndicator.active {
+	background: rgba(34, 211, 238, 0.15);
+	color: var(--color-accent);
+	border-color: rgba(34, 211, 238, 0.3);
+	opacity: 1;
+	box-shadow: 0 0 12px var(--color-accent-glow);
+}
+
+/* Guide & Tabs Text Content */
+#guideDiv,
+#tabsDiv {
+	padding: 70px 40px 20px 40px;
+	overflow-y: auto;
 }
 
 #guideDiv h3 {
-	margin-bottom: 0px;
-	margin-top: 10px;
-	line-height: 1em;
+	font-weight: 500;
+	color: var(--color-primary);
+	margin-top: 24px;
 }
 
-#tabsDiv {
-	margin-left: auto;
-	margin-right: auto;
-	display: flex;
-	flex-flow: row wrap;
-	align-content: center;
-	justify-content: center;
-	margin-top: 10px;
+#guideDiv p {
+	font-size: 13px;
+	line-height: 1.6;
+	color: var(--text-muted);
 }
 
-#tabsDiv #eqTabList {
+/* Bottom Controls - Glassmorphism Dashboard */
+#bottomControls {
+	position: relative;
 	width: 100%;
-	page-break-after: always;
-	break-after: always;
-	display: flex;
-	justify-content: center;
+	background: rgba(13, 14, 18, 0.98);
+	backdrop-filter: blur(20px);
+	border-bottom: 1px solid var(--bg-glass-border);
+	/* Changed to bottom since it's at the top */
+	padding: 16px 20px;
+	flex-shrink: 0;
+	z-index: 100;
+	box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+	/* Shadow below */
+}
+
+.dashboard-grid {
+	display: grid;
+	grid-template-columns: 140px 1fr 180px;
+	gap: 20px;
 	align-items: center;
 }
 
-input.visible {
-	visibility: visible !important;
-}
-
-#eqSvg,
-#gainSvg {
-	display: inline;
-}
-
-#eqTabList {
-	clear: both;
-}
-
-#bottomControls {
+.dash-section {
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
-	margin-top: 10px;
-	padding: 0 10px;
+	gap: 8px;
 }
 
-.control-row {
-	display: flex;
+/* Grouping functional elements */
+.power-section {
+	justify-content: center;
+}
+
+.preset-section {
+	flex-direction: column;
 	align-items: center;
-	justify-content: space-between;
+}
+
+.preset-input-group {
+	display: flex;
+	gap: 6px;
 	width: 100%;
 }
 
-.top-row {
-	margin-bottom: 5px;
+.settings-section {
+	align-items: flex-end;
 }
 
-.bottom-row {
-	justify-content: space-between;
-	align-items: stretch;
-	/* Stretch to fill height */
-}
-
-/* Specific alignments for Top Row */
-.left-controls {
-	flex: 0 0 auto;
-}
-
-.center-controls {
-	flex: 1;
+.settings-row,
+.io-row {
 	display: flex;
-	justify-content: center;
+	gap: 6px;
+	width: 100%;
+	justify-content: flex-end;
+}
+
+/* EQ Power & Reset Buttons */
+#eqTabButton {
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--bg-glass-border);
+	color: var(--text-muted);
+	display: flex;
 	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 0 12px;
+	font-weight: 600;
+	height: 34px;
+	border-radius: var(--radius-sm);
 }
 
-.right-controls {
-	flex: 0 0 auto;
+#eqTabButton.active {
+	background: linear-gradient(135deg, var(--color-primary), #6366f1);
+	border-color: transparent;
+	color: #fff;
+	box-shadow: 0 0 15px var(--color-primary-glow);
 }
 
-/* Preset Select */
-#presetSelect {
-	background-color: #2C3E50;
-	color: wheat;
-	border: 1px solid wheat;
-	border-radius: 3px;
-	padding: 2px 5px;
-	font-size: 14px;
-	width: 200px;
-	outline: none;
-	height: 24px;
-}
-
-/* Bottom Row Items */
 #resetFiltersButton {
-	white-space: nowrap;
-	margin-right: 5px;
-	height: 48px;
-	/* Taller button */
-	cursor: pointer;
-	flex: 0 0 auto;
+	background: rgba(239, 68, 68, 0.05);
+	border: 1px solid rgba(239, 68, 68, 0.2);
+	color: #f87171;
+	height: 34px;
+	font-weight: 500;
+}
+
+#resetFiltersButton:hover {
+	background: rgba(239, 68, 68, 0.15);
+	border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Preset Elements */
+#presetSelect {
+	width: 100%;
+	height: 34px;
+	background: rgba(255, 255, 255, 0.05);
 }
 
 #presetNameInput {
 	flex: 1;
-	margin-right: 5px;
-	height: 48px !important;
-	/* Force height */
-	box-sizing: border-box;
-	width: 100px !important;
-	/* Override width: 75px */
-	padding: 0 5px;
+	height: 34px;
+}
+
+.preset-input-group button {
+	width: 34px;
+	height: 34px;
+	flex-shrink: 0;
 	font-size: 14px;
 }
 
-.action-columns {
-	display: flex;
-	gap: 5px;
-}
-
-.action-col {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-}
-
-.action-col button {
-	margin: 0 !important;
-	width: 110px;
-	font-size: 11px;
-	padding: 2px 5px;
-	cursor: pointer;
-	height: 22px;
-	/* Fixed height for stacked buttons */
+/* Right Section Buttons */
+#qualityModeSelect {
+	flex: 1;
+	height: 34px;
 }
 
 #vizButton {
-	margin: 0;
-	height: 24px;
-	cursor: pointer;
-}
-
-#eqTabList span,
-#infoDiv {
-	color: wheat;
-	margin-left: 5px;
-}
-
-#proDiv {
-	display: flex;
-	flex-flow: column;
-	align-content: center;
-	justify-content: center;
-	align-items: center;
-}
-
-.tabFavIcon {
-	max-height: 16px;
-	max-width: 16px;
-	float: right;
-	margin-left: 4px;
-}
-
-body {
-	background-color: #2C3E50;
-	-webkit-touch-callout: none;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-	min-width: 640px;
-}
-
-html {
-	min-height: 500px;
-}
-
-h1,
-h2,
-h3,
-h4,
-#pl,
-#lt {
-	color: wheat;
-}
-
-#lt {
-	line-height: 1.5;
-}
-
-#pl {
-	color: wheat;
-	outline: none;
-	display: none;
-	font-size: 14px;
-}
-
-#presetNameInput,
-button {
-	background-color: #2C3E50;
-	color: wheat;
-	outline: none;
-	border-width: 1px;
-	border-color: wheat;
-	border-style: solid;
-	border-radius: 2px;
-}
-
-#presetNameInput {
-	height: 20px;
-	width: 75px;
-}
-
-#importPresetsFile {
-	display: none;
-}
-
-em,
-a,
-body {
-	color: wheat;
-	-webkit-touch-callout: none;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-}
-
-#amzDiv {
-	margin-top: 11px;
-	float: left;
-	margin-bottom: 5px;
-}
-
-a.button {
-	background-color: #2C3E50;
-	border-width: 1px;
-	color: wheat;
-	border-color: wheat;
-	border-style: solid;
-	padding: 3px;
-
-	text-decoration: none;
-}
-
-form {
-	margin-bottom: 0px;
-}
-
-a:focus {
-	outline: 0;
-}
-
-#warning,
-#contactInfo {
-	margin-left: auto;
-	margin-right: 5px;
-	float: right;
-	clear: both;
-}
-
-.filterDot {
-	pointer-events: all;
-}
-
-.filterDot:hover {
-	stroke: white;
-	stroke-width: 2px;
-}
-
-.gainLine {
-	stroke-width: 5px;
-}
-
-.gainLine:hover {
-	stroke: white;
-}
-
-#infoDiv {
-	float: right;
-	margin-bottom: 5px;
-}
-
-#paypal {
-	display: inline;
-}
-
-#eqThisTabDiv {
-	position: absolute;
-	top: 48px;
-	right: 15px;
-	z-index: 500;
-}
-
-#eqThisTabDiv button {
-	margin: 0;
-	display: inline-block;
-}
-
-#eqOptionsDiv {
-	position: absolute;
-	top: 21;
-	left: -16;
+	width: 80px;
+	height: 34px;
 }
 
 #vizButton.on {
-	background-color: wheat;
-	color: #2C3E50;
-	outline: none;
-	border-width: 1px;
-	border-color: wheat;
-	border-style: solid;
+	background: rgba(34, 211, 238, 0.1);
+	border-color: var(--color-accent);
+	color: var(--color-accent);
+	box-shadow: 0 0 10px var(--color-accent-glow);
 }
 
+.io-row button {
+	flex: 1;
+	height: 30px;
+	font-size: 10px;
+}
+
+/* Global button/select overrides for dashboard */
+button,
+select,
+input {
+	border-radius: var(--radius-sm);
+	transition: all var(--anim-fast);
+	background: rgba(255, 255, 255, 0.05);
+	/* Ensure dark theme */
+	color: var(--text-main);
+	border: 1px solid var(--bg-glass-border);
+	outline: none;
+	padding: 0 10px;
+	font-family: var(--font-family);
+	font-size: 11px;
+}
+
+select option {
+	background: #1e1b4b;
+	/* Dark background for dropdown options */
+	color: #fff;
+}
+
+button:hover,
+select:hover,
+input:hover {
+	background: rgba(255, 255, 255, 0.1);
+	border-color: rgba(255, 255, 255, 0.2);
+}
+
+button:hover {
+	transform: translateY(-1px);
+}
+
+button:active {
+	transform: translateY(0);
+}
+
+/* Specific overrides for buttons with colors */
+#savePresetButton {
+	background: rgba(34, 211, 238, 0.1);
+	color: var(--color-accent);
+}
+
+#deletePresetButton {
+	background: rgba(239, 68, 68, 0.05);
+	color: #f87171;
+}
+
+/* EQ Overlay Button (When no tab active) */
+#eqThisTabDiv {
+	position: absolute;
+	top: 40%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	text-align: center;
+	z-index: 100;
+}
+
+#eqThisTabDiv button {
+	padding: 12px 32px;
+	height: auto;
+	font-size: 15px;
+	border-radius: 99px;
+}
+
+/* Toast Notification */
+#toast {
+	position: absolute;
+	bottom: 20px;
+	left: 50%;
+	transform: translateX(-50%) translateY(20px);
+	background: rgba(15, 23, 42, 0.9);
+	backdrop-filter: blur(10px);
+	border: 1px solid var(--color-primary);
+	color: #fff;
+	padding: 10px 20px;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 500;
+	opacity: 0;
+	pointer-events: none;
+	transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+	z-index: 1000;
+	white-space: nowrap;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+#toast.show {
+	opacity: 1;
+	transform: translateX(-50%) translateY(0);
+}
+
+/* Fullscreen Link (hidden by default unless small screen logic) */
+#fullscreen-link {
+	opacity: 1;
+	color: var(--text-main);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+	width: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+/* Message Toast (reused requiresProDiv) */
 #requiresProDiv {
 	position: absolute;
-	top: 102px;
-	left: 100px;
-	z-index: 1000;
-	width: 484px;
+	top: 80px;
+	left: 50%;
+	transform: translateX(-50%) translateY(-20px);
+	background: rgba(15, 17, 21, 0.95);
+	backdrop-filter: blur(12px);
+	border: 1px solid var(--color-primary);
+	border-radius: var(--radius-md);
+	padding: 12px 24px;
+	color: var(--text-main);
+	z-index: 500;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+	font-size: 13px;
 	text-align: center;
-	pointer-events: none;
 	opacity: 0;
-	transition: all linear 0.2s;
-}
-
-#upgradeExtensionDiv {
-	position: absolute;
-	top: 102px;
-	left: 100px;
-	width: 484px;
-	text-align: center;
 	pointer-events: none;
-	transition: all linear 0.2s;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	width: 80%;
 }
 
 #requiresProDiv.show {
 	opacity: 1;
-}
-
-/* Quality Mode Selector */
-#qualityModeSelect {
-	background-color: #2C3E50;
-	color: wheat;
-	border: 1px solid wheat;
-	border-radius: 3px;
-	font-size: 12px;
-	padding: 2px 6px;
-	cursor: pointer;
-	outline: none;
-	margin-left: 5px;
-	height: 24px;
-}
-
-#qualityModeSelect:hover {
-	background-color: #3d5166;
-}
-
-#qualityModeSelect option {
-	background-color: #2C3E50;
-	color: wheat;
-}
-
-/* Limiter indicator */
-#limiterIndicator {
-	position: absolute;
-	top: 26px;
-	/* Aligned with tabs */
-	right: 15px;
-	/* Far right */
-	font-family: sans-serif;
-	font-weight: bold;
-	font-size: 10px;
-	color: #555;
-	background-color: #222;
-	padding: 2px 4px;
-	border-radius: 3px;
-	opacity: 0.3;
-	transition: all 0.1s;
-	pointer-events: none;
-	z-index: 1000;
-}
-
-#limiterIndicator.active {
-	color: #ff5555;
-	opacity: 1;
-	box-shadow: 0 0 5px rgba(255, 85, 85, 0.4);
-	animation: limiter-pulse 0.5s ease infinite;
-}
-
-@keyframes limiter-pulse {
-	0% {
-		opacity: 0.8;
-	}
-
-	50% {
-		opacity: 1;
-	}
-
-	100% {
-		opacity: 0.8;
-	}
-}
-
-/* SBR Indicator */
-#sbrIndicator {
-	position: absolute;
-	top: 26px;
-	right: 50px;
-	/* Left of LIM (right: 15px) */
-	font-family: sans-serif;
-	font-weight: bold;
-	font-size: 10px;
-	color: #555;
-	background-color: #222;
-	padding: 2px 4px;
-	border-radius: 3px;
-	opacity: 0.3;
-	/* Dimmed by default */
-	transition: all 0.5s;
-	pointer-events: none;
-	z-index: 1000;
-}
-
-#sbrIndicator.active {
-	opacity: 1;
-	color: #4CAF50;
-	/* Green for "Good/Active" feature */
-	box-shadow: 0 0 5px rgba(76, 175, 80, 0.4);
-}
-
-/* Quality mode indicator colors */
-#qualityModeSelect.efficient {
-	border-color: #4CAF50;
-}
-
-#qualityModeSelect.quality {
-	border-color: #2196F3;
-}
-
-#qualityModeSelect.hifi {
-	border-color: #9C27B0;
+	transform: translateX(-50%) translateY(0);
+	pointer-events: auto;
 }

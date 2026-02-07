@@ -129,9 +129,7 @@ function initMessaging() {
                 showMessage("Preset '" + name + "' loaded.");
             });
         }
-        else if (msg.type === "F") { // Force license check failure?
-            showLicenseError();
-        }
+
     });
 }
 
@@ -240,10 +238,7 @@ function initUI() {
     // Save Preset
     saveBtn.onclick = () => {
         const name = presetInput.value.trim();
-        if (MAX_PRESETS && document.getElementById("presetSelect").options.length - 1 >= MAX_PRESETS) {
-            showMessage("Saving more than " + MAX_PRESETS + " presets requires Ears Pro.");
-            return;
-        }
+        // MAX_PRESETS check removed
         if (name !== "") {
             chrome.runtime.sendMessage({ type: "savePreset", preset: name });
             showMessage("Preset '" + name + "' saved.");
@@ -302,10 +297,7 @@ function initUI() {
     if (Visualizer.isVisualizerOn()) vizBtn.classList.add("on");
 
     vizBtn.onclick = () => {
-        if (MAX_PRESETS) { // If Pro required
-            showMessage("The frequency spectrum visualizer requires Ears Pro.");
-            // return; // allow toggle anyway for now as usage matches original
-        }
+        // MAX_PRESETS check removed
         const isOn = Visualizer.toggleVisualizer();
         if (isOn) vizBtn.classList.add("on");
         else vizBtn.classList.remove("on");
@@ -373,12 +365,13 @@ function updateLimiterIndicator(reduction) {
 }
 
 function showMessage(msg) { // a(e)
-    const el = document.getElementById("requiresProDiv");
+    const el = document.getElementById("toast");
+    if (!el) return;
     el.textContent = msg;
     el.classList.add("show");
     setTimeout(() => {
         el.classList.remove("show");
-    }, 5000);
+    }, 3000);
 }
 
 function setupTabCapture() { // a()
@@ -419,7 +412,10 @@ function setupTabCapture() { // a()
 function uiSetStartEq() { // W
     const btn = document.getElementById("eqTabButton");
     btn.onclick = () => setupTabCapture();
-    btn.textContent = "EQ This Tab";
+    // btn.textContent = "EQ"; 
+    btn.innerHTML = '<span class="power-icon">⏻</span> EQ';
+    btn.classList.remove("active");
+    btn.title = "Enable EQ for this tab";
 }
 
 function uiSetStopEq() { // G
@@ -427,12 +423,10 @@ function uiSetStopEq() { // G
     btn.onclick = () => {
         chrome.runtime.sendMessage({ type: "eqTab", on: false });
     };
-    btn.textContent = "Stop EQing This Tab";
+    // btn.textContent = "EQ";
+    btn.innerHTML = '<span class="power-icon">⏻</span> EQ';
+    btn.classList.add("active");
+    btn.title = "Disable EQ for this tab";
 }
 
-function showLicenseError() { // F
-    document.getElementById("eqSvg").remove();
-    document.getElementById("eqTabButton").remove();
-    document.getElementById("lt").textContent = "Thank you for using Ears!"; // Original text was longer
-    document.getElementById("pl").style.display = "block";
-}
+

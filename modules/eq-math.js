@@ -1,7 +1,7 @@
 
 // Constants
 export const WIDTH = 600;      // T
-export const HEIGHT = 300;     // B
+export const HEIGHT = 360;     // B
 export const GAIN_WIDTH = 30;  // g
 export const MAX_FREQ = 22050; // c
 export const MAX_GAIN = 30;    // u

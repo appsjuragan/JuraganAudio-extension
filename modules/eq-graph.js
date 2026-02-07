@@ -47,13 +47,13 @@ export function drawEQ(filters, gainVal) {
     // But the original code does I = Snap("#eqSvg") every time.
 
     eqSvg = Snap("#eqSvg");
-    eqSvg.attr({ fill: "#2C3E50", height: EQMath.HEIGHT, width: EQMath.WIDTH });
+    eqSvg.attr({ fill: "transparent", height: EQMath.HEIGHT, width: EQMath.WIDTH });
 
     gainSvg = Snap("#gainSvg");
-    gainSvg.attr({ fill: "#2C3E50", height: EQMath.HEIGHT, width: EQMath.GAIN_WIDTH });
+    gainSvg.attr({ fill: "transparent", height: EQMath.HEIGHT, width: EQMath.GAIN_WIDTH });
 
     // Background rect
-    eqSvg.rect(0, 0, EQMath.WIDTH, EQMath.HEIGHT).attr({ stroke: "wheat" });
+    eqSvg.rect(0, 0, EQMath.WIDTH, EQMath.HEIGHT).attr({ stroke: "rgba(255,255,255,0.1)" });
 
     // Draw filter curves
     drawAllCurves(filters);
@@ -77,15 +77,15 @@ function drawGainSlider(gainObj) {
     const y1 = EQMath.gainToY(EQMath.MAX_GAIN); // u = 30
     const yZero = EQMath.gainToY(0);
 
-    gainSvg.line(midX, y0, midX, y1).attr({ stroke: "wheat", opacity: 0.5 });
+    gainSvg.line(midX, y0, midX, y1).attr({ stroke: "#9ca3af", opacity: 0.3 });
 
     gainSvg.text(midX, 15, "Vol")
-        .attr({ fill: "wheat", "text-anchor": "middle", "font-size": 10 });
+        .attr({ fill: "#9ca3af", "text-anchor": "middle", "font-size": 10 });
 
-    gainSvg.line(midX - 5, yZero, midX + 5, yZero).attr({ stroke: "wheat" });
+    gainSvg.line(midX - 5, yZero, midX + 5, yZero).attr({ stroke: "#9ca3af" });
 
     const dragLine = gainSvg.line(0, gainObj.y, EQMath.GAIN_WIDTH, gainObj.y)
-        .attr({ stroke: "wheat" })
+        .attr({ stroke: "#f3f4f6", "stroke-width": 5, cursor: "ns-resize" })
         .addClass("gainLine");
 
     dragLine.drag(
@@ -98,15 +98,15 @@ function drawGainSlider(gainObj) {
 function drawFilterDots(filters) {
     for (let i = 0; i < filters.length; i++) {
         const filter = filters[i];
-        let dotStyle = { fill: "wheat", stroke: "wheat" };
+        let dotStyle = { fill: "#f3f4f6", stroke: "#f3f4f6" };
         if (filter.t === "peaking") {
-            dotStyle = { fill: "#CDF7E1", stroke: "#CDF7E1" }; // w
+            dotStyle = { fill: "#818cf8", stroke: "#818cf8" }; // Primary
         } else if (filter.t === "highshelf" || filter.t === "lowshelf") {
-            dotStyle = { fill: "#9573A8", stroke: "#9573A8" }; // b
+            dotStyle = { fill: "#22d3ee", stroke: "#22d3ee" }; // Accent
         }
 
-        const dot = eqSvg.circle(filter.x, filter.y, 4)
-            .attr(dotStyle)
+        const dot = eqSvg.circle(filter.x, filter.y, 6)
+            .attr({ ...dotStyle, "stroke-width": 2, stroke: "#fff" })
             .addClass("filterDot");
 
         dot.drag(
@@ -136,11 +136,11 @@ function drawGrid(svg) { // ae
     const maxFreq = EQMath.MAX_FREQ;
     for (let freq = 5; freq < maxFreq; freq *= 2) {
         const x = EQMath.freqToX(freq);
-        svg.line(x, EQMath.HEIGHT / 2 + 10, x, EQMath.HEIGHT / 2 - 10).attr({ stroke: "wheat", "stroke-opacity": 0.25 });
-        svg.line(x, EQMath.HEIGHT, x, EQMath.HEIGHT - 15).attr({ stroke: "wheat" });
+        svg.line(x, EQMath.HEIGHT / 2 + 10, x, EQMath.HEIGHT / 2 - 10).attr({ stroke: "#9ca3af", "stroke-opacity": 0.15 });
+        svg.line(x, EQMath.HEIGHT, x, EQMath.HEIGHT - 15).attr({ stroke: "#9ca3af", "stroke-opacity": 0.3 });
         svg.text(x, EQMath.HEIGHT - 18, "" + Math.round(xToFreqForLabel(x)))
-            .attr({ fill: "wheat", "text-anchor": "middle", "font-size": 10 });
-        svg.line(x, 0, x, 15).attr({ stroke: "wheat" });
+            .attr({ fill: "#6b7280", "text-anchor": "middle", "font-size": 9 });
+        svg.line(x, 0, x, 15).attr({ stroke: "#9ca3af", "stroke-opacity": 0.3 });
     }
 
     // Draw horizontal gain lines
@@ -148,9 +148,9 @@ function drawGrid(svg) { // ae
     for (let g = EQMath.MIN_GAIN; g < EQMath.MAX_GAIN; g += step) {
         const y = EQMath.gainToY(g);
         if (Math.abs(EQMath.MAX_GAIN) - Math.abs(g) > step / 2) {
-            svg.line(0, y, 5, y).attr({ stroke: "wheat" });
+            svg.line(0, y, 5, y).attr({ stroke: "#9ca3af", "stroke-opacity": 0.3 });
             svg.text(7, y, "" + g)
-                .attr({ fill: "wheat", "font-size": 10, "dominant-baseline": "middle" });
+                .attr({ fill: "#6b7280", "font-size": 9, "dominant-baseline": "middle" });
         }
     }
 }
@@ -199,7 +199,7 @@ function onDragGain(element, gainObj) { // oe
 
 function onDragGainEnd(element, gainObj) { // se
     return function () {
-        this.attr({ fill: "wheat" }); // Restore color (original said fill: q (#2C3E50)? No, gainLine is stroke wheat) 
+        this.attr({ fill: "#f3f4f6" }); // Restore color (white/grey) 
         // Original se function: this.attr({ fill: q }); wait, gainLine is a line, fill has no effect? 
         // Ah, original used "fill: q" which is dark blue. Maybe it resets highlight.
 
@@ -300,10 +300,10 @@ function updateFilterCurve(svg, filter, index) { // d
     // c variable in d function: var c = Math.pow(10, Math.abs(i) / 20);
     const c_val = Math.pow(10, Math.abs(i) / 20);
 
-    let h = "wheat"; // color
+    let h = "#9ca3af"; // color
 
     if (filter.t === "peaking") {
-        h = "#CDF7E1"; // w
+        h = "#818cf8"; // w -> Primary
         if (i >= 0) {
             s = 1 / (1 + (1 / a) * o + o * o);
             u = (1 + (c_val / a) * o + o * o) * s;
@@ -320,7 +320,7 @@ function updateFilterCurve(svg, filter, index) { // d
             d = (1 - (c_val / a) * o + o * o) * s;
         }
     } else if (filter.t === "highshelf") {
-        h = "#9573A8"; // b
+        h = "#22d3ee"; // b -> Accent
         // ... (copy math)
         const sqrt2 = Math.SQRT2;
         const sqrt2c = Math.sqrt(2 * c_val);
@@ -341,7 +341,7 @@ function updateFilterCurve(svg, filter, index) { // d
             d = (c_val - sqrt2c * o + o * o) * s;
         }
     } else if (filter.t === "lowshelf") {
-        h = "#9573A8"; // b
+        h = "#22d3ee"; // b -> Accent
         const sqrt2 = Math.SQRT2;
         const sqrt2c = Math.sqrt(2 * c_val);
 
@@ -393,7 +393,7 @@ function updateFilterCurve(svg, filter, index) { // d
 
     // Gradient
     let gradientKey = null;
-    const qColor = "#2C3E50"; // q
+    const qColor = "rgba(0,0,0,0)"; // Transparent for gradient fade
     if (i >= 0) {
         gradientKey = svg.gradient("l(.5, 0, .5, 1)" + h + "-" + qColor);
     } else {
