@@ -1,9 +1,11 @@
 // AudioWorklet Processor for Ears Extension
 // Handles real-time audio processing using Web Audio API
+import init, { EarsDSP } from './ears_dsp.js';
 
 class EarsAudioProcessor extends AudioWorkletProcessor {
-    constructor() {
+    constructor(options) {
         super();
+        this.wasmModule = options?.processorOptions?.wasmModule;
 
         // Audio processing state
         this.filters = [];
@@ -67,6 +69,108 @@ class EarsAudioProcessor extends AudioWorkletProcessor {
         }
 
         this.port.onmessage = (event) => this.handleMessage(event.data);
+
+        // Start loading Wasm
+        this.loadWasmModule();
+    }
+
+    async loadWasmModule() {
+        try {
+            console.log("Loading Wasm module...");
+            const instance = await init({ module_or_path: this.wasmModule });
+            this.wasmMemory = instance.memory;
+
+            this.wasmDSP_L = new EarsDSP(this.sampleRate);
+            this.wasmDSP_R = new EarsDSP(this.sampleRate);
+
+            this.wasmLoaded = true;
+            console.log('Wasm DSP loaded and initialized (Stereo)');
+
+            this.syncWasmState();
+
+        } catch (e) {
+            console.error('Failed to load Wasm DSP:', e);
+        }
+    }
+
+    syncWasmState() {
+        if (!this.wasmLoaded) return;
+
+        this.filters.forEach((f, i) => {
+            let typeId = 1;
+            if (f.type === 'lowshelf') typeId = 0;
+            if (f.type === 'highshelf') typeId = 2;
+
+            this.wasmDSP_L.set_filter(i, typeId, f.frequency, f.q, f.gain);
+            this.wasmDSP_R.set_filter(i, typeId, f.frequency, f.q, f.gain);
+        });
+
+        this.wasmDSP_L.set_sbr_active(this.sbrActive);
+        this.wasmDSP_R.set_sbr_active(this.sbrActive);
+
+        this.wasmDSP_L.set_gain(this.outputGain);
+        this.wasmDSP_R.set_gain(this.outputGain);
+
+        let threshold = 0.89;
+        if (this.qualityMode === 'quality') threshold = 0.94;
+        if (this.qualityMode === 'hifi') threshold = 0.96;
+        this.wasmDSP_L.set_limiter(threshold, 0.5);
+        this.wasmDSP_R.set_limiter(threshold, 0.5);
+    }
+
+    processWasm(input, output, blockSize) {
+        if (input[0] && output[0]) {
+            this.wasmDSP_L.process_block(input[0], output[0]);
+        }
+
+        if (input[1] && output[1]) {
+            this.wasmDSP_R.process_block(input[1], output[1]);
+        }
+
+        // FFT Analysis & SBR Detection (JS Side)
+        if (output[0]) {
+            // Accumulate samples for FFT (Sliding Window)
+            const left = output[0];
+            const right = output[1] || output[0];
+
+            // Create temp array
+            const blockData = new Float32Array(blockSize);
+            for (let i = 0; i < blockSize; i++) {
+                blockData[i] = (left[i] + right[i]) * 0.5;
+            }
+
+            // Shift buffer left and append new data
+            this.fftBuffer.copyWithin(0, blockSize);
+            this.fftBuffer.set(blockData, this.fftSize - blockSize);
+
+            this.fftCounter++;
+            if (this.fftCounter >= Math.floor(this.sampleRate / blockSize / 30)) {
+                this.fftCounter = 0;
+
+                // Use JS FFT
+                const fftData = this.performFFT(this.fftBuffer);
+
+                this.detectSBR(fftData);
+
+                let reductionDb = 0;
+                if (this.wasmLoaded) {
+                    const l = this.wasmDSP_L.get_reduction_db();
+                    const r = this.wasmDSP_R.get_reduction_db();
+                    reductionDb = Math.min(l, r);
+
+                    this.wasmDSP_L.set_sbr_active(this.sbrActive);
+                    this.wasmDSP_R.set_sbr_active(this.sbrActive);
+                }
+
+                this.port.postMessage({
+                    type: 'fftData',
+                    data: fftData,
+                    limiterReduction: reductionDb,
+                    sbrActive: this.sbrActive
+                });
+            }
+        }
+        return true;
     }
 
     initFilters() {
@@ -139,28 +243,47 @@ class EarsAudioProcessor extends AudioWorkletProcessor {
     processSBR(sample, channelId) {
         let state = (channelId === 'L') ? this.sbrHp1 : this.sbrHp2;
         let hp1 = this.highpass(sample, state, 0.8);
-        return sample + (Math.abs(hp1) * this.sbrGain * 0.1);
+        // Boosted SBR gain by +6dB (0.1 -> 0.2)
+        return sample + (Math.abs(hp1) * this.sbrGain * 0.2);
     }
 
     detectSBR(magnitudes) {
+        if (typeof this.sbrHoldTimer === 'undefined') this.sbrHoldTimer = 0;
+
         let midEnergy = 0, highEnergy = 0;
         // Check array bounds before accessing
         if (magnitudes.length < 2700) return;
 
+        // Mid Band: 2kHz - 5kHz (Bin ~340 to ~850)
         for (let i = 340; i < 850; i++) midEnergy += magnitudes[i];
-        for (let i = 1360; i < 2700; i++) highEnergy += magnitudes[i];
-        midEnergy /= (850 - 340); highEnergy /= (2700 - 1360);
 
-        if (midEnergy > 0.05 && (highEnergy / midEnergy) < 0.2) {
+        // High Band: 6kHz - 16kHz (Bin ~1024 to ~2700)
+        for (let i = 1024; i < 2700; i++) highEnergy += magnitudes[i];
+
+        midEnergy /= (850 - 340);
+        highEnergy /= (2700 - 1024);
+
+        // Relaxes threshold to 0.5 (was 0.2) to account for dB scaling
+        const conditionMet = (midEnergy > 0.05 && (highEnergy / midEnergy) < 0.5);
+
+        if (conditionMet) {
+            this.sbrHoldTimer = 5.0; // Hold for 5 seconds
             this.sbrActive = true;
         } else {
-            this.sbrActive = false;
+            if (this.sbrHoldTimer > 0) {
+                this.sbrHoldTimer -= 0.035; // Approx 35ms per frame
+                this.sbrActive = true;
+            } else {
+                this.sbrActive = false;
+            }
         }
 
         if (this.sbrActive) {
-            this.sbrGain += 0.005; if (this.sbrGain > 1.0) this.sbrGain = 1.0;
+            this.sbrGain += 0.05; // Faster attack
+            if (this.sbrGain > 1.0) this.sbrGain = 1.0;
         } else {
-            this.sbrGain -= 0.005; if (this.sbrGain < 0.0) this.sbrGain = 0.0;
+            this.sbrGain -= 0.01; // Slower release
+            if (this.sbrGain < 0.0) this.sbrGain = 0.0;
         }
     }
 
@@ -196,15 +319,60 @@ class EarsAudioProcessor extends AudioWorkletProcessor {
                     this.filters[data.index].gain = data.gain;
                     this.filters[data.index].q = data.q;
                     this.calculateBiquadCoefficients(this.filters[data.index]);
+
+                    if (this.wasmLoaded) {
+                        let f = this.filters[data.index];
+                        let typeId = 1;
+                        if (f.type === 'lowshelf') typeId = 0;
+                        if (f.type === 'highshelf') typeId = 2;
+
+                        this.wasmDSP_L.set_filter(data.index, typeId, f.frequency, f.q, f.gain);
+                        this.wasmDSP_R.set_filter(data.index, typeId, f.frequency, f.q, f.gain);
+                    }
                 }
                 break;
-            case 'modifyGain': this.outputGain = data.gain; break;
+            case 'modifyGain':
+                this.outputGain = data.gain;
+                if (this.wasmLoaded) {
+                    this.wasmDSP_L.set_gain(data.gain);
+                    this.wasmDSP_R.set_gain(data.gain);
+                }
+                break;
             case 'resetFilters':
-                this.filters.forEach(filter => { filter.gain = 0; this.calculateBiquadCoefficients(filter); });
-                this.outputGain = 1.0; break;
+                this.filters.forEach((filter, i) => {
+                    filter.gain = 0;
+                    this.calculateBiquadCoefficients(filter);
+                    if (this.wasmLoaded) {
+                        this.wasmDSP_L.set_filter(i, 1, filter.frequency, filter.q, 0.0);
+                        this.wasmDSP_R.set_filter(i, 1, filter.frequency, filter.q, 0.0);
+                    }
+                });
+                this.outputGain = 1.0;
+                break;
             case 'setQualityMode':
                 this.qualityMode = data.mode;
-                this.filters.forEach(filter => { filter.q = this.getQForFrequency(filter.frequency); this.calculateBiquadCoefficients(filter); });
+
+                // Update Limiter
+                let threshold = 0.89;
+                if (this.qualityMode === 'quality') threshold = 0.94;
+                if (this.qualityMode === 'hifi') threshold = 0.96;
+
+                if (this.wasmLoaded) {
+                    this.wasmDSP_L.set_limiter(threshold, 0.5);
+                    this.wasmDSP_R.set_limiter(threshold, 0.5);
+                }
+
+                this.filters.forEach((filter, i) => {
+                    filter.q = this.getQForFrequency(filter.frequency);
+                    this.calculateBiquadCoefficients(filter);
+                    if (this.wasmLoaded) {
+                        let typeId = 1;
+                        if (filter.type === 'lowshelf') typeId = 0;
+                        if (filter.type === 'highshelf') typeId = 2;
+                        this.wasmDSP_L.set_filter(i, typeId, filter.frequency, filter.q, filter.gain);
+                        this.wasmDSP_R.set_filter(i, typeId, filter.frequency, filter.q, filter.gain);
+                    }
+                });
                 break;
         }
     }
@@ -247,24 +415,19 @@ class EarsAudioProcessor extends AudioWorkletProcessor {
         const input = inputs[0]; const output = outputs[0];
         if (!input || input.length === 0) return true;
 
-        const numChannels = Math.min(input.length, output.length);
         const blockSize = input[0].length;
+
+        // Use Wasm if loaded
+        if (this.wasmLoaded) {
+            return this.processWasm(input, output, blockSize);
+        }
+
+        const numChannels = Math.min(input.length, output.length);
         const threshold = this.qualityMode === 'efficient' ? 0.89 : this.qualityMode === 'quality' ? 0.94 : 0.96;
 
+        // If Wasm not loaded, BYPASS DSP but keep Visualization
         for (let ch = 0; ch < numChannels; ch++) {
-            const inputChannel = input[ch]; const outputChannel = output[ch];
-            const channelId = ch === 0 ? 'L' : 'R';
-
-            for (let i = 0; i < blockSize; i++) {
-                let sample = inputChannel[i];
-                for (let f = 0; f < this.numFilters; f++) sample = this.processBiquad(this.filters[f], sample, channelId);
-
-                if (this.sbrGain > 0.001) sample = this.processSBR(sample, channelId);
-
-                sample *= this.outputGain;
-                sample = this.softLimit(sample, threshold);
-                outputChannel[i] = sample;
-            }
+            output[ch].set(input[ch]);
         }
 
         for (let i = 0; i < blockSize; i++) {

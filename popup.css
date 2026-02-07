@@ -52,6 +52,7 @@
 	-moz-transition: .1s;
 	-o-transition: .1s;
 	-ms-transition: .1s;
+	transition: .1s;
 }
 
 #mainDiv>div {
@@ -338,8 +339,6 @@ a:focus {
 	outline: 0;
 }
 
-button :focus {}
-
 #warning,
 #contactInfo {
 	margin-left: auto;
@@ -391,8 +390,6 @@ button :focus {}
 	top: 21;
 	left: -16;
 }
-
-#vizButton {}
 
 #vizButton.on {
 	background-color: wheat;
@@ -506,8 +503,8 @@ button :focus {}
 	background-color: #222;
 	padding: 2px 4px;
 	border-radius: 3px;
-	opacity: 0;
-	/* Hidden by default */
+	opacity: 0.3;
+	/* Dimmed by default */
 	transition: all 0.5s;
 	pointer-events: none;
 	z-index: 1000;

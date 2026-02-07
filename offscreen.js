@@ -51,10 +51,19 @@ async function initAudio() {
         return;
     }
 
-    // Create AudioWorklet node
-    audioWorkletNode = new AudioWorkletNode(M, 'ears-audio-processor');
+    // Load and compile Wasm module
+    const response = await fetch(chrome.runtime.getURL('worklet/ears_dsp_bg.wasm'));
+    const bytes = await response.arrayBuffer();
+    const wasmModule = await WebAssembly.compile(bytes);
 
-    // Handle messages from worklet (only for limiter reduction now)
+    // Create AudioWorklet node
+    audioWorkletNode = new AudioWorkletNode(M, 'ears-audio-processor', {
+        processorOptions: {
+            wasmModule: wasmModule
+        }
+    });
+
+    // Handle messages from worklet (FFT data, limiter, SBR)
     // Handle messages from worklet (FFT data, limiter, SBR)
     audioWorkletNode.port.onmessage = (event) => {
         if (event.data.type === 'fftData') {

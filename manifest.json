@@ -31,6 +31,8 @@
       {
          "resources": [
             "worklet/audio-processor.js",
+            "worklet/ears_dsp.js",
+            "worklet/ears_dsp_bg.wasm",
             "webgpu/shaders/spectrum.wgsl",
             "webgpu/spectrum-renderer.js"
          ],
@@ -40,7 +42,7 @@
       }
    ],
    "content_security_policy": {
-      "extension_pages": "script-src 'self'; object-src 'self'"
+      "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
    },
    "minimum_chrome_version": "109",
    "update_url": "https://clients2.google.com/service/update2/crx"

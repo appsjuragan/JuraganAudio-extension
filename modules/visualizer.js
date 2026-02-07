@@ -81,7 +81,7 @@ function P(e) {
     return Math.pow(val, 0.25) * T;
 }
 
-function updateVisualizer(data) {
+export function updateVisualizer(data) {
     if (!isVisualizerOn()) return;
 
     // Remove old polyline
@@ -96,7 +96,7 @@ function updateVisualizer(data) {
         else return;
     }
 
-    const n = data.fft; // These are dB values (-100 to 0)
+    const n = data.data || data.fft; // Handle both message formats
     if (I && n && n.length > 0) {
         // Gradient
         // l(x1, y1, x2, y2)

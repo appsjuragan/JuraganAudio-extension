@@ -8,6 +8,7 @@ pub struct Limiter {
     lookahead_buffer: Vec<f32>,
     lookahead_pos: usize,
     sample_rate: f32,
+    min_gain: f32,
 }
 
 impl Limiter {
@@ -21,12 +22,19 @@ impl Limiter {
             lookahead_buffer: vec![0.0; (sample_rate * 0.005) as usize], // 5ms lookahead
             lookahead_pos: 0,
             sample_rate,
+            min_gain: 1.0,
         }
     }
 
     pub fn set_params(&mut self, threshold: f32, knee: f32) {
         self.threshold = threshold;
         self.knee = knee;
+    }
+    
+    pub fn get_and_reset_min_gain(&mut self) -> f32 {
+        let val = self.min_gain;
+        self.min_gain = 1.0;
+        val
     }
 
     pub fn process(&mut self, input: f32) -> f32 {
@@ -48,13 +56,6 @@ impl Limiter {
             
             if excess < self.knee {
                 // Soft knee region
-                // Quadratic interpolation for smooth transition
-                let normalized = excess / self.knee;
-                // gain = 1.0 - (normalized * normalized) * 0.5; // Approximation
-                // More accurate soft knee:
-                // y = x - (x - T + W/2)^2 / (2W)
-                // gain = y/x
-                // Here using simple ratio reduction
                 gain = self.threshold / self.envelope;
             } else {
                 // Hard limiting region
@@ -62,6 +63,10 @@ impl Limiter {
             }
         }
         
+        if gain < self.min_gain {
+            self.min_gain = gain;
+        }
+
         // Apply look-ahead delay
         let delayed_input = self.lookahead_buffer[self.lookahead_pos];
         self.lookahead_buffer[self.lookahead_pos] = input;
