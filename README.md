@@ -54,4 +54,4 @@ JuraganAudio is a powerful, real-time audio equalizer extension for Google Chrom
 - [ ] Add spatial audio/stereo widening effects
 
 ---
-*Created with ❤️ by Kevin King.*
+*Created with ❤️ by AppsJuragan inc.*
