@@ -197,8 +197,6 @@ body>input#tab-3:checked~h1 #tabNav label[for="tab-3"] {
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.3s ease;
-	padding-top: 60px;
-	/* Space for tabs */
 	z-index: 10;
 	background: var(--bg-void);
 }
@@ -249,23 +247,127 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	box-shadow: 0 0 12px var(--color-accent-glow);
 }
 
-/* Guide & Tabs Text Content */
 #guideDiv,
 #tabsDiv {
-	padding: 70px 40px 20px 40px;
+	padding: 24px 32px;
 	overflow-y: auto;
 }
 
-#guideDiv h3 {
+/* Tabs List Styling */
+#eqTabList {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.tab-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid var(--bg-glass-border);
+	border-radius: var(--radius-md);
+	padding: 12px 16px;
+	transition: all var(--anim-fast);
+}
+
+.tab-row:hover {
+	background: rgba(255, 255, 255, 0.05);
+	border-color: rgba(255, 255, 255, 0.15);
+	transform: translateX(4px);
+}
+
+.tab-info {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex: 1;
+	min-width: 0;
+	/* Ensures text truncation works */
+}
+
+.tab-favicon {
+	width: 20px;
+	height: 20px;
+	border-radius: 4px;
+	flex-shrink: 0;
+}
+
+.tab-title {
+	font-size: 13px;
 	font-weight: 500;
+	color: var(--text-main);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tab-actions {
+	margin-left: 16px;
+}
+
+.stop-eq-btn {
+	background: rgba(239, 68, 68, 0.1) !important;
+	color: #f87171 !important;
+	border-color: rgba(239, 68, 68, 0.2) !important;
+	height: 30px !important;
+	padding: 0 12px !important;
+	font-size: 11px !important;
+	font-weight: 600 !important;
+}
+
+.stop-eq-btn:hover {
+	background: rgba(239, 68, 68, 0.2) !important;
+	border-color: #f87171 !important;
+}
+
+.empty-tabs-message {
+	text-align: center;
+	padding: 40px 20px;
+	color: var(--text-muted);
+	font-size: 14px;
+	background: rgba(255, 255, 255, 0.02);
+	border-radius: var(--radius-lg);
+	border: 1px dashed var(--bg-glass-border);
+}
+
+.empty-tabs-message b {
 	color: var(--color-primary);
-	margin-top: 24px;
+}
+
+#guideDiv h3 {
+	font-weight: 600;
+	color: var(--color-primary);
+	margin-top: 32px;
+	margin-bottom: 12px;
+	font-size: 16px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	padding-bottom: 8px;
+}
+
+#guideDiv h3:first-child {
+	margin-top: 0;
 }
 
 #guideDiv p {
-	font-size: 13px;
-	line-height: 1.6;
+	font-size: 13.5px;
+	line-height: 1.7;
 	color: var(--text-muted);
+	margin-bottom: 16px;
+}
+
+#guideDiv strong {
+	color: var(--text-main);
+	font-weight: 600;
+}
+
+#guideDiv br {
+	margin-bottom: 4px;
+	display: block;
+	content: "";
 }
 
 /* Bottom Controls - Glassmorphism Dashboard */

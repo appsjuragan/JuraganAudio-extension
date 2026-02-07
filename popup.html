@@ -1,7 +1,13 @@
-<link rel="stylesheet" type="text/css" href="popup.css" />
-<script src="snap.svg-min.js"></script>
+<!DOCTYPE html>
+<html lang="en">
 
-<script type="module" src="modules/main.js"></script>
+<head>
+  <meta charset="utf-8" />
+  <title>Ears Audio Toolkit</title>
+  <link rel="stylesheet" type="text/css" href="popup.css" />
+  <script src="snap.svg-min.js"></script>
+  <script type="module" src="modules/main.js"></script>
+</head>
 
 <body>
   <!-- Radio Inputs for Tabs - Must be first for sibling selectors -->
@@ -68,51 +74,65 @@
   <div id="mainDiv">
     <!-- Inputs moved to body top -->
 
-    <span id="limiterIndicator">LIM</span>
-    <span id="sbrIndicator" title="Spectral Band Replication active - restoring high frequencies">SBR</span>
     <div id="eqDiv">
+      <span id="limiterIndicator">LIM</span>
+      <span id="sbrIndicator" title="Spectral Band Replication active - restoring high frequencies">SBR</span>
       <svg id="gainSvg" width="30" height="300"></svg>
       <svg id="eqSvg" width="600" height="300"></svg>
       <div id="eqOptionsDiv">
       </div>
     </div>
     <div id="guideDiv">
+      <h3>🚀 Getting Started</h3>
       <p>
-        When you click the Ears icon, the current tab is added to Ears. To add
-        another tab, open that tab, then click the Ears icon again.
+        Ears works on a per-tab basis. Click the extension icon to activate audio processing for the current tab.
+        Want to EQ multiple tabs? Just open them and click the icon on each one.
       </p>
-      <h3>EQ</h3>
+
+      <h3>🎛️ Precision EQ</h3>
       <p>
-        The movable dots each represent a filter used to equalize (or EQ) the
-        audio. Filters allow you to boost or lower certain frequencies (i.e.
-        just part of the treble or bass). The purple dots act as shelf filters
-        while the blue dots act as notch filters.
+        Take control with our interactive parametric equalizer:
       </p>
       <p>
-        Moving a dot left or right selects lower or higher frequencies, while
-        moving a dot up or down increases the volume of those
-        frequencies. Shift-dragging a filter up and down will widen or narrow
-        the filter, also called changing its Q value.
+        &bull; <strong>Shelf Filters (Purple):</strong> Best for broad bass or treble adjustments.<br>
+        &bull; <strong>Notch Filters (Blue):</strong> Perfect for targeting specific frequencies.<br>
+        &bull; <strong>Frequency (Left/Right):</strong> Slide to select the tone.<br>
+        &bull; <strong>Gain (Up/Down):</strong> Boost the energy or cut the harshness.<br>
+        &bull; <strong>Q-Factor (Shift + Drag):</strong> Adjust the width of the filter for surgical precision.
+      </p>
+
+      <h3>🌈 Visual Insight</h3>
+      <p>
+        The real-time spectrum visualizer shows your audio's DNA. Lower sounds are on the left, higher sounds on the
+        right.
+        Watch how your EQ curve carves the sound in real-time.
+        <a href="https://www.youtube.com/watch?v=VMnkYTan5pY" rel="noopener noreferrer" target="_blank">Watch the
+          demo</a>.
+      </p>
+
+      <h3>💎 Advanced Tech</h3>
+      <p>
+        &bull; <strong>SBR (Spectral Band Replication):</strong> Restores high-frequency detail for a "crisp" and airy
+        sound.
+        Look for the <strong>SBR</strong> indicator.<br>
+        &bull; <strong>Limiter (LIM):</strong> Prevents digital distortion. If the <strong>LIM</strong> indicator glows,
+        Ears
+        is protecting your ears and speakers.<br>
+        &bull; <strong>Quality Modes:</strong> Choose <strong>Efficient</strong> for battery saving or
+        <strong>Hi-Fi</strong>
+        for the highest fidelity processing.
+      </p>
+
+      <h3>💾 Presets</h3>
+      <p>
+        Found your perfect sound? Type a name and click <strong>+</strong> to save it. High-quality audio is now just
+        one click away.
       </p>
 
       <p>
-        The frequency spectrum visualizer shows you what you are listening to
-        and how your EQ has changed it. Lower sounds appear to the left and
-        higher to the right (with volume indicated by the height of a peak).
-        <a href="https://www.youtube.com/watch?v=VMnkYTan5pY" rel="noreferrer
-			noopener" target="_blank">Watch the demo</a>.
-      </p>
-
-      <p>
-        For more information about how to use filters, check out
-        <a href="https://music.tutsplus.com/tutorials/how-to-use-a-parametric-equalizer--audio-2301"
-          rel="noopener noreferrer" target="_blank">this guide</a>.
-      </p>
-      <h3>Presets</h3>
-      <p>
-        To save a configuration of filters for later, type a name in the text
-        box below, then click 'Save Preset' or press ENTER. The save and delete
-        buttons operate on whichever preset's name is selected in the text box.
+        Need a deep dive? Check out <a
+          href="https://music.tutsplus.com/tutorials/how-to-use-a-parametric-equalizer--audio-2301"
+          rel="noopener noreferrer" target="_blank">our EQ masterclass guide</a>.
       </p>
     </div>
     <div id="tabsDiv">
@@ -124,3 +144,5 @@
     Full Window</a>
   <div id="toast"></div>
 </body>
+
+</html>

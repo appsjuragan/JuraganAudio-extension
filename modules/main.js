@@ -172,47 +172,56 @@ function updateWorkspace(data) { // J
     updateTabsList(data.streams || []);
 }
 
-function updateTabsList(streams) { // K
+function updateTabsList(streams) {
     const container = document.getElementById("eqTabList");
     container.innerHTML = "";
 
     if (streams.length === 0) {
-        container.textContent = "No tabs active. Click 'EQ This Tab' below to activate this tab.";
+        container.innerHTML = `
+            <div class="empty-tabs-message">
+                No tabs active. Click <b>EQ This Tab</b> to start.
+            </div>`;
         return;
     }
 
-    const table = document.createElement("table");
     streams.forEach(stream => {
-        const tr = document.createElement("tr");
+        const row = document.createElement("div");
+        row.className = "tab-row";
 
-        // Stop button
+        // Info container (icon + title)
+        const info = document.createElement("div");
+        info.className = "tab-info";
+
+        const img = document.createElement("img");
+        img.className = "tab-favicon";
+        img.src = stream.favIconUrl || 'ears16.png';
+        img.alt = "";
+
+        const title = document.createElement("span");
+        title.className = "tab-title";
+        title.textContent = stream.title.length > 50 ? stream.title.substring(0, 50) + "..." : stream.title;
+        title.title = stream.title;
+
+        info.appendChild(img);
+        info.appendChild(title);
+
+        // Actions container
+        const actions = document.createElement("div");
+        actions.className = "tab-actions";
+
         const btn = document.createElement("button");
-        btn.textContent = "Stop EQing";
+        btn.className = "stop-eq-btn";
+        btn.textContent = "Stop EQ";
         btn.onclick = () => {
             chrome.runtime.sendMessage({ type: "disconnectTab", tab: stream });
         };
 
-        // Icon
-        const img = document.createElement("img");
-        img.className = "tabFavIcon";
-        img.src = stream.favIconUrl;
-        img.alt = "";
-        btn.appendChild(img);
+        actions.appendChild(btn);
 
-        const td1 = document.createElement("td");
-        td1.appendChild(btn);
-        tr.appendChild(td1);
-
-        // Title
-        const td2 = document.createElement("td");
-        let title = stream.title;
-        if (title.length > 45) title = title.substring(0, 45);
-        td2.textContent = title;
-        tr.appendChild(td2);
-
-        table.appendChild(tr);
+        row.appendChild(info);
+        row.appendChild(actions);
+        container.appendChild(row);
     });
-    container.appendChild(table);
 }
 
 function initUI() {
