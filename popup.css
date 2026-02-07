@@ -1,28 +1,23 @@
 :root {
-	/* Dark Mode (Default) */
 	--bg-void: #090a0c;
 	--bg-glass: rgba(22, 24, 29, 0.7);
 	--bg-glass-border: rgba(255, 255, 255, 0.08);
 	--header-bg: rgba(9, 10, 12, 0.8);
 	--dashboard-bg: rgba(13, 14, 18, 0.98);
-
 	--color-primary: #818cf8;
 	--color-primary-glow: rgba(129, 140, 248, 0.4);
 	--color-accent: #22d3ee;
 	--color-accent-glow: rgba(34, 211, 238, 0.4);
-
 	--text-main: #f3f4f6;
 	--text-muted: #9ca3af;
 	--input-bg: rgba(255, 255, 255, 0.05);
 	--dropdown-bg: #1e1b4b;
-
 	--gradient-stop: #1e1b4b;
-
 	--radius-sm: 8px;
 	--radius-md: 12px;
 	--radius-lg: 16px;
 	--font-family: 'Inter', system-ui, -apple-system, sans-serif;
-	--anim-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	--anim-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1)
 }
 
 body.light-mode {
@@ -31,65 +26,54 @@ body.light-mode {
 	--bg-glass-border: rgba(0, 0, 0, 0.1);
 	--header-bg: rgba(243, 244, 246, 0.8);
 	--dashboard-bg: #e5e7eb;
-
 	--color-primary: #4f46e5;
 	--color-primary-glow: rgba(79, 70, 229, 0.2);
 	--color-accent: #0891b2;
 	--color-accent-glow: rgba(8, 145, 178, 0.1);
-
 	--text-main: #1f2937;
 	--text-muted: #4b5563;
 	--input-bg: rgba(0, 0, 0, 0.08);
 	--dropdown-bg: #ffffff;
-
-	--gradient-stop: #d1d5db;
+	--gradient-stop: #d1d5db
 }
 
-/* Reset & Base */
 *,
 *::before,
 *::after {
-	box-sizing: border-box;
+	box-sizing: border-box
 }
 
-/* Ensure body handles height */
 body {
 	margin: 0;
 	background: var(--bg-void);
 	color: var(--text-main);
 	font-family: var(--font-family);
-	/* min-width: 640px; */
 	width: 670px;
-	/* Flush layout for 640px + 30px SVGs */
 	min-height: fit-content;
 	overflow: hidden;
-	/* Hide scrollbars if content fits */
 	display: flex;
-	flex-direction: column;
+	flex-direction: column
 }
 
-/* Adjust MainDiv to not be fixed height if possible, or just fixed */
 #mainDiv {
 	position: relative;
 	height: 340px;
 	flex-shrink: 0;
-	background: radial-gradient(circle at 50% -20%, var(--gradient-stop) 0%, var(--bg-void) 70%);
+	background: radial-gradient(circle at 50% -20%, var(--gradient-stop) 0%, var(--bg-void) 70%)
 }
 
 a {
 	color: var(--color-accent);
 	text-decoration: none;
-	transition: color var(--anim-fast);
+	transition: color var(--anim-fast)
 }
 
 a:hover {
-	color: var(--color-primary);
+	color: var(--color-primary)
 }
 
-/* Header */
 body>h1 {
 	position: relative;
-	/* Context for centered tabs */
 	padding: 10px 24px;
 	font-size: 15px;
 	font-weight: 600;
@@ -101,42 +85,33 @@ body>h1 {
 	z-index: 50;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: space-between
 }
 
-/* Top Right Links */
 #warning,
 #contactInfo {
 	font-size: 11px;
 	color: var(--text-muted);
-	display: none;
-	/* Simplify UI, move to guide or tooltips if needed to reduce clutter */
+	display: none
 }
 
-/* Re-enable if critical, but for "Premium" look, less is more */
-
-
-
-/* Tabs logic */
 body>input[type="radio"] {
-	display: none;
+	display: none
 }
 
-/* Tab Navigation Container - Now in Header */
 #tabNav {
 	position: absolute;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 	z-index: 20;
-
 	display: flex;
 	align-items: center;
 	background: var(--input-bg);
 	border: 1px solid var(--bg-glass-border);
 	border-radius: 99px;
 	padding: 2px;
-	gap: 4px;
+	gap: 4px
 }
 
 #themeToggle {
@@ -152,25 +127,23 @@ body>input[type="radio"] {
 	cursor: pointer;
 	font-size: 14px;
 	transition: background 0.3s;
-	color: var(--text-main);
+	color: var(--text-main)
 }
 
 #themeToggle:hover {
-	background: rgba(255, 255, 255, 0.2);
+	background: rgba(255, 255, 255, 0.2)
 }
 
 body.light-mode #themeToggle {
-	background: rgba(0, 0, 0, 0.05);
+	background: rgba(0, 0, 0, 0.05)
 }
 
 body.light-mode #themeToggle:hover {
-	background: rgba(0, 0, 0, 0.1);
+	background: rgba(0, 0, 0, 0.1)
 }
 
-/* Individual Tab Pills */
 #tabNav label {
 	padding: 4px 12px;
-	/* Slightly smaller */
 	font-size: 12px;
 	font-weight: 500;
 	color: var(--text-muted);
@@ -181,23 +154,19 @@ body.light-mode #themeToggle:hover {
 	user-select: none;
 	text-align: center;
 	white-space: nowrap;
-
-	/* Ensure no legacy margins/transforms */
 	margin: 0;
 	transform: none;
 	left: auto;
 	width: auto;
-	border: none;
+	border: none
 }
 
-/* Active State Styles */
-/* Inputs are now at body root, h1 is sibling */
 body>input#tab-1:checked~h1 #tabNav label[for="tab-1"],
 body>input#tab-2:checked~h1 #tabNav label[for="tab-2"],
 body>input#tab-3:checked~h1 #tabNav label[for="tab-3"] {
 	background: rgba(255, 255, 255, 0.15);
 	color: var(--text-main);
-	box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+	box-shadow: 0 0 15px rgba(255, 255, 255, 0.05)
 }
 
 body.light-mode>input#tab-1:checked~h1 #tabNav label[for="tab-1"],
@@ -205,15 +174,14 @@ body.light-mode>input#tab-2:checked~h1 #tabNav label[for="tab-2"],
 body.light-mode>input#tab-3:checked~h1 #tabNav label[for="tab-3"] {
 	background: #fff;
 	color: var(--color-primary);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
 }
 
 #tabNav label:hover {
 	color: var(--text-main);
-	background: rgba(255, 255, 255, 0.05);
+	background: rgba(255, 255, 255, 0.05)
 }
 
-/* EQ Area */
 #eqDiv {
 	position: absolute;
 	top: 0;
@@ -224,18 +192,15 @@ body.light-mode>input#tab-3:checked~h1 #tabNav label[for="tab-3"] {
 	align-items: flex-start;
 	justify-content: flex-start;
 	padding-top: 10px;
-	padding-left: 0px;
+	padding-left: 0;
 	z-index: 10;
-
-	/* Visibility Control */
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.3s ease;
+	transition: opacity 0.3s ease
 }
 
 #eqDiv svg {
-	display: block;
-	/* vertical-align removed due to block display */
+	display: block
 }
 
 #guideDiv,
@@ -249,18 +214,16 @@ body.light-mode>input#tab-3:checked~h1 #tabNav label[for="tab-3"] {
 	pointer-events: none;
 	transition: opacity 0.3s ease;
 	z-index: 10;
-	background: var(--bg-void);
+	background: var(--bg-void)
 }
 
-/* Content visibility - targeted via body inputs -> #mainDiv -> content */
 body>input#tab-1:checked~#mainDiv #eqDiv,
 body>input#tab-2:checked~#mainDiv #guideDiv,
 body>input#tab-3:checked~#mainDiv #tabsDiv {
 	opacity: 1;
-	pointer-events: auto;
+	pointer-events: auto
 }
 
-/* Indicators */
 #limiterIndicator,
 #sbrIndicator {
 	position: absolute;
@@ -275,11 +238,11 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	opacity: 0.3;
 	border: 1px solid transparent;
 	transition: all 0.3s;
-	z-index: 50;
+	z-index: 50
 }
 
 #sbrIndicator {
-	right: 70px;
+	right: 70px
 }
 
 #limiterIndicator.active {
@@ -287,7 +250,7 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	color: #f87171;
 	border-color: rgba(239, 68, 68, 0.3);
 	opacity: 1;
-	box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+	box-shadow: 0 0 12px rgba(239, 68, 68, 0.2)
 }
 
 #sbrIndicator.active {
@@ -295,20 +258,19 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	color: var(--color-accent);
 	border-color: rgba(34, 211, 238, 0.3);
 	opacity: 1;
-	box-shadow: 0 0 12px var(--color-accent-glow);
+	box-shadow: 0 0 12px var(--color-accent-glow)
 }
 
 #guideDiv,
 #tabsDiv {
 	padding: 24px 32px;
-	overflow-y: auto;
+	overflow-y: auto
 }
 
-/* Tabs List Styling */
 #eqTabList {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 12px
 }
 
 .tab-row {
@@ -319,13 +281,13 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	border: 1px solid var(--bg-glass-border);
 	border-radius: var(--radius-md);
 	padding: 12px 16px;
-	transition: all var(--anim-fast);
+	transition: all var(--anim-fast)
 }
 
 .tab-row:hover {
 	background: rgba(255, 255, 255, 0.05);
 	border-color: rgba(255, 255, 255, 0.15);
-	transform: translateX(4px);
+	transform: translateX(4px)
 }
 
 .tab-info {
@@ -333,15 +295,14 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	align-items: center;
 	gap: 12px;
 	flex: 1;
-	min-width: 0;
-	/* Ensures text truncation works */
+	min-width: 0
 }
 
 .tab-favicon {
 	width: 20px;
 	height: 20px;
 	border-radius: 4px;
-	flex-shrink: 0;
+	flex-shrink: 0
 }
 
 .tab-title {
@@ -350,11 +311,11 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	color: var(--text-main);
 	white-space: nowrap;
 	overflow: hidden;
-	text-overflow: ellipsis;
+	text-overflow: ellipsis
 }
 
 .tab-actions {
-	margin-left: 16px;
+	margin-left: 16px
 }
 
 .stop-eq-btn {
@@ -364,12 +325,12 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	height: 30px !important;
 	padding: 0 12px !important;
 	font-size: 11px !important;
-	font-weight: 600 !important;
+	font-weight: 600 !important
 }
 
 .stop-eq-btn:hover {
 	background: rgba(239, 68, 68, 0.2) !important;
-	border-color: #f87171 !important;
+	border-color: #f87171 !important
 }
 
 .empty-tabs-message {
@@ -379,11 +340,11 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	font-size: 14px;
 	background: rgba(255, 255, 255, 0.02);
 	border-radius: var(--radius-lg);
-	border: 1px dashed var(--bg-glass-border);
+	border: 1px dashed var(--bg-glass-border)
 }
 
 .empty-tabs-message b {
-	color: var(--color-primary);
+	color: var(--color-primary)
 }
 
 #guideDiv h3 {
@@ -396,32 +357,31 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	align-items: center;
 	gap: 8px;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-	padding-bottom: 8px;
+	padding-bottom: 8px
 }
 
 #guideDiv h3:first-child {
-	margin-top: 0;
+	margin-top: 0
 }
 
 #guideDiv p {
 	font-size: 13.5px;
 	line-height: 1.7;
 	color: var(--text-muted);
-	margin-bottom: 16px;
+	margin-bottom: 16px
 }
 
 #guideDiv strong {
 	color: var(--text-main);
-	font-weight: 600;
+	font-weight: 600
 }
 
 #guideDiv br {
 	margin-bottom: 4px;
 	display: block;
-	content: "";
+	content: ""
 }
 
-/* Bottom Controls - Glassmorphism Dashboard */
 #bottomControls {
 	position: relative;
 	width: 100%;
@@ -431,40 +391,39 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	padding: 8px 16px;
 	flex-shrink: 0;
 	z-index: 100;
-	box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+	box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3)
 }
 
 .dashboard-grid {
 	display: grid;
 	grid-template-columns: 140px 1fr 180px;
 	gap: 10px;
-	align-items: center;
+	align-items: center
 }
 
 .dash-section {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 4px
 }
 
-/* Grouping functional elements */
 .power-section {
-	justify-content: center;
+	justify-content: center
 }
 
 .preset-section {
 	flex-direction: column;
-	align-items: center;
+	align-items: center
 }
 
 .preset-input-group {
 	display: flex;
 	gap: 6px;
-	width: 100%;
+	width: 100%
 }
 
 .settings-section {
-	align-items: flex-end;
+	align-items: flex-end
 }
 
 .settings-row,
@@ -472,10 +431,9 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	display: flex;
 	gap: 6px;
 	width: 100%;
-	justify-content: flex-end;
+	justify-content: flex-end
 }
 
-/* EQ Power & Reset Buttons */
 #eqTabButton {
 	background: rgba(255, 255, 255, 0.05);
 	border: 1px solid var(--bg-glass-border);
@@ -487,14 +445,14 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	padding: 0 12px;
 	font-weight: 600;
 	height: 30px;
-	border-radius: var(--radius-sm);
+	border-radius: var(--radius-sm)
 }
 
 #eqTabButton.active {
 	background: linear-gradient(135deg, var(--color-primary), #6366f1);
 	border-color: transparent;
 	color: #fff;
-	box-shadow: 0 0 15px var(--color-primary-glow);
+	box-shadow: 0 0 15px var(--color-primary-glow)
 }
 
 #resetFiltersButton {
@@ -502,58 +460,55 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	border: 1px solid rgba(239, 68, 68, 0.2);
 	color: #f87171;
 	height: 30px;
-	font-weight: 500;
+	font-weight: 500
 }
 
 #resetFiltersButton:hover {
 	background: rgba(239, 68, 68, 0.15);
-	border-color: rgba(239, 68, 68, 0.4);
+	border-color: rgba(239, 68, 68, 0.4)
 }
 
-/* Preset Elements */
 #presetSelect {
 	width: 100%;
 	height: 30px;
-	background: rgba(255, 255, 255, 0.05);
+	background: rgba(255, 255, 255, 0.05)
 }
 
 #presetNameInput {
 	flex: 1;
-	height: 30px;
+	height: 30px
 }
 
 .preset-input-group button {
 	width: 30px;
 	height: 30px;
 	flex-shrink: 0;
-	font-size: 14px;
+	font-size: 14px
 }
 
-/* Right Section Buttons */
 #qualityModeSelect {
 	flex: 1;
-	height: 30px;
+	height: 30px
 }
 
 #vizButton {
 	width: 80px;
-	height: 30px;
+	height: 30px
 }
 
 #vizButton.on {
 	background: rgba(34, 211, 238, 0.1);
 	border-color: var(--color-accent);
 	color: var(--color-accent);
-	box-shadow: 0 0 10px var(--color-accent-glow);
+	box-shadow: 0 0 10px var(--color-accent-glow)
 }
 
 .io-row button {
 	flex: 1;
 	height: 30px;
-	font-size: 10px;
+	font-size: 10px
 }
 
-/* Global button/select overrides for dashboard */
 button,
 select,
 input {
@@ -566,58 +521,55 @@ input {
 	padding: 0 10px;
 	font-family: var(--font-family);
 	font-size: 11px;
-	height: 30px;
+	height: 30px
 }
 
 select option {
 	background: var(--dropdown-bg);
-	color: var(--text-main);
+	color: var(--text-main)
 }
 
 button:hover,
 select:hover,
 input:hover {
 	background: rgba(255, 255, 255, 0.1);
-	border-color: rgba(255, 255, 255, 0.2);
+	border-color: rgba(255, 255, 255, 0.2)
 }
 
 button:hover {
-	transform: translateY(-1px);
+	transform: translateY(-1px)
 }
 
 button:active {
-	transform: translateY(0);
+	transform: translateY(0)
 }
 
-/* Specific overrides for buttons with colors */
 #savePresetButton {
 	background: rgba(34, 211, 238, 0.1);
-	color: var(--color-accent);
+	color: var(--color-accent)
 }
 
 #deletePresetButton {
 	background: rgba(239, 68, 68, 0.05);
-	color: #f87171;
+	color: #f87171
 }
 
-/* EQ Overlay Button (When no tab active) */
 #eqThisTabDiv {
 	position: absolute;
 	top: 40%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 	text-align: center;
-	z-index: 100;
+	z-index: 100
 }
 
 #eqThisTabDiv button {
 	padding: 12px 32px;
 	height: auto;
 	font-size: 15px;
-	border-radius: 99px;
+	border-radius: 99px
 }
 
-/* Toast Notification */
 #toast {
 	position: absolute;
 	bottom: 20px;
@@ -636,39 +588,36 @@ button:active {
 	transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 	z-index: 1000;
 	white-space: nowrap;
-	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5)
 }
 
 #toast.show {
 	opacity: 1;
-	transform: translateX(-50%) translateY(0);
+	transform: translateX(-50%) translateY(0)
 }
 
-/* Fullscreen Link (hidden by default unless small screen logic) */
 #fullscreen-link {
 	opacity: 1;
-	color: var(--text-main);
+	color: var(--text-main)
 }
 
-/* Scrollbars */
 ::-webkit-scrollbar {
-	width: 6px;
+	width: 6px
 }
 
 ::-webkit-scrollbar-track {
-	background: transparent;
+	background: transparent
 }
 
 ::-webkit-scrollbar-thumb {
 	background: rgba(255, 255, 255, 0.1);
-	border-radius: 99px;
+	border-radius: 99px
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background: rgba(255, 255, 255, 0.2);
+	background: rgba(255, 255, 255, 0.2)
 }
 
-/* Message Toast (reused requiresProDiv) */
 #requiresProDiv {
 	position: absolute;
 	top: 80px;
@@ -687,11 +636,11 @@ button:active {
 	opacity: 0;
 	pointer-events: none;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	width: 80%;
+	width: 80%
 }
 
 #requiresProDiv.show {
 	opacity: 1;
 	transform: translateX(-50%) translateY(0);
-	pointer-events: auto;
+	pointer-events: auto
 }
