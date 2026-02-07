@@ -27,6 +27,18 @@
       "storage",
       "offscreen"
    ],
+   "web_accessible_resources": [
+      {
+         "resources": [
+            "worklet/audio-processor.js",
+            "webgpu/shaders/spectrum.wgsl",
+            "webgpu/spectrum-renderer.js"
+         ],
+         "matches": [
+            "<all_urls>"
+         ]
+      }
+   ],
    "content_security_policy": {
       "extension_pages": "script-src 'self'; object-src 'self'"
    },

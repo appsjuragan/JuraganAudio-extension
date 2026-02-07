@@ -410,3 +410,17 @@ button :focus {}
 #qualityModeSelect.hifi {
 	border-color: #9C27B0;
 }
+
+/* WebGPU Canvas */
+#webgpuCanvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.5s;
+}
+
+#webgpuCanvas.active {
+	opacity: 0.5;
+}

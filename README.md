@@ -23,10 +23,10 @@ Ears is a powerful, real-time audio equalizer extension for Google Chrome. It al
 
 ## 🛠️ Technical Details
 
-- **Core**: Built using the Web Audio API (`AudioContext`, `BiquadFilterNode`, `AnalyserNode`, `DynamicsCompressorNode`).
-- **Visualization**: Powered by `Snap.svg` for smooth, vector-based rendering of the EQ curve and spectrum.
-- **Capture**: Uses `chrome.tabCapture` API to intercept and process audio streams.
-- **Architecture**: Manifest V3 with offscreen document for audio processing.
+- **Core**: Built using the Web Audio API (`AudioWorklet`, `AudioContext`).
+- **Processing**: Custom 11-band EQ and soft limiter implemented in `AudioWorklet` for glitch-free performance.
+- **Visualization**: powered by **WebGPU** for silky smooth 60FPS spectrum rendering (with Canvas 2D fallback).
+- **Architecture**: Manifest V3 with offscreen document for audio processing. Rust DSP library ready for future WebAssembly integration.
 
 ## 🚀 Getting Started
 
@@ -41,10 +41,11 @@ Ears is a powerful, real-time audio equalizer extension for Google Chrome. It al
 
 ## 🔧 Recent Improvements
 
-- **Sound Quality Enhancements**: 3 quality modes, soft limiting, dithering, optimized filters
-- **Manifest V3**: Fully migrated to MV3 architecture with offscreen audio processing
-- **Unminified Source Code**: Readable code for easier maintenance and contribution
-- **Limiter Indicator**: Visual feedback when the soft limiter is active
+- **Next-Gen Engine**: Migrated from `BiquadFilterNode` to `AudioWorklet` for superior performance and flexibility
+- **WebGPU Visualizer**: New high-performance spectrum analyzer
+- **Sound Quality**: 3 quality modes, intelligent soft limiting, frequency-dependent Q
+- **Manifest V3**: Fully migrated architecture
+- **Rust DSP**: Core signal processing logic ported to Rust (ready for Wasm)
 
 ## 📝 Roadmap
 

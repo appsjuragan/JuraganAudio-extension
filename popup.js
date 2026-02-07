@@ -13,6 +13,7 @@ function scope() {
 
 
     var N = function () { };
+    var spectrumRenderer = null;
 
     document.addEventListener("DOMContentLoaded", function (e) {
         _();
@@ -251,58 +252,34 @@ function scope() {
     };
 
     function U(e) {
+        // Remove old SVG visualization if present
         if (C) {
             C.remove();
+            C = null;
         }
+
         if (!y()) {
+            if (spectrumRenderer) spectrumRenderer.stop();
             return;
         }
-        var n = e.fft;
-        if (I && n.length > 0) {
-            strokeGradient = I.gradient("l(.5, 0, .5, 1)" + m + "-" + q);
-            var r = [];
-            function a(e) {
-                return B - 1 - e;
-            }
-            for (var i in n) {
-                var o = (i * E) / (n.length * 2);
-                if (o < 10) {
-                    continue;
-                }
-                var s = P(o);
-                if (s > T) {
-                    break;
-                }
-                var c = ((n[i] + 100) / 100) * B;
-                r.push([s, c]);
-            }
-            var u = [];
-            for (var i in r) {
-                var l = r[i];
-                if (u.length == 0) {
-                    u.push(l);
-                    continue;
-                }
-                var f = u[u.length - 1];
-                var v = 2;
-                if (l[0] - f[0] < v) {
-                    if (l[1] > f[1]) {
-                        f[1] = l[1];
+
+        // Initialize WebGPU renderer if needed
+        if (!spectrumRenderer) {
+            const canvas = document.getElementById('webgpuCanvas');
+            if (canvas) {
+                spectrumRenderer = new SpectrumRenderer(canvas);
+                spectrumRenderer.init().then(success => {
+                    if (success) {
+                        canvas.classList.add('active'); // Make visible
+                        spectrumRenderer.start();
                     }
-                } else {
-                    u.push(l);
-                }
+                });
             }
-            var d = [];
-            for (var i in u) {
-                var f = u[i];
-                d = d.concat([f[0], a(f[1])]);
-            }
-            C = I.polyline(d).attr({
-                "fill-opacity": "0",
-                stroke: strokeGradient,
-                "pointer-events": "none"
-            });
+        }
+
+        // Update data
+        if (spectrumRenderer && e.fft && e.fft.length > 0) {
+            spectrumRenderer.updateFrequencyData(e.fft);
         }
     }
 

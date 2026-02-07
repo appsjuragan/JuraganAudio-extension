@@ -1,13 +1,7 @@
-// offscreen.js - Pure Audio Processor (MV3) with Sound Quality Enhancements
+// Offscreen Document - Audio Processing with AudioWorklet
+// Migrated from BiquadFilterNode to AudioWorklet for better performance
 
-// Global variables (No chrome.storage or chrome.tabs here!)
 var M = null; // AudioContext
-var B = null; // Source Gain
-var G = null; // Output Gain
-var L = null; // Limiter (DynamicsCompressor)
-var Q = null; // Analyser
-var V = [];   // Filters
-var K = 11;
 var Y = {};   // Active streams map
 var Z = false; // Is Audio Initialized
 
@@ -16,140 +10,104 @@ var qualityMode = 'efficient'; // 'efficient', 'quality', 'hifi'
 
 const fftChannel = new BroadcastChannel('ears_fft');
 
-// Optimized frequency-dependent Q values for better sound quality
-var z = [20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480];
-// Q values: wider for bass, tighter for mids/highs, gentle for shelves
-var H_EFFICIENT = [0.5, 0.55, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.4, 1.6, 0.5];
-var H_QUALITY = [0.45, 0.5, 0.55, 0.65, 0.75, 0.85, 1.1, 1.4, 1.8, 2.0, 0.45];
-var H = H_EFFICIENT; // Default to efficient mode Q values
+// AudioWorklet node
+var audioWorkletNode = null;
 
-function initAudio() {
+// Filter configuration
+const K = 11;
+const z = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 12000, 16000];
+
+async function initAudio() {
     if (Z) return;
-    Z = true;
 
-    // Force consistent 48kHz sample rate for quality
     M = new AudioContext({
         latencyHint: "playback",
         sampleRate: 48000
     });
-    M.suspend();
 
-    B = M.createGain();
-    B.gain.value = 1;
-    G = M.createGain();
-    G.gain.value = 1;
-
-    // Create soft limiter to prevent clipping distortion
-    L = M.createDynamicsCompressor();
-    L.threshold.value = -1;      // Start limiting at -1dB
-    L.knee.value = 6;            // 6dB soft knee for smooth limiting
-    L.ratio.value = 20;          // Near-brick-wall limiting
-    L.attack.value = 0.001;      // 1ms attack - fast enough to catch peaks
-    L.release.value = 0.1;       // 100ms release - smooth recovery
-
-    V = [];
-    var prevNode = B;
-    for (var j = 0; j < K; j++) {
-        var filter = M.createBiquadFilter();
-        if (j == 0) filter.type = "lowshelf";
-        else if (j == K - 1) filter.type = "highshelf";
-        else filter.type = "peaking";
-
-        filter.frequency.value = z[j];
-        filter.gain.value = 0;
-        filter.Q.value = H[j];
-
-        prevNode.connect(filter);
-        prevNode = filter;
-        V.push(filter);
+    // Load AudioWorklet processor
+    try {
+        await M.audioWorklet.addModule(chrome.runtime.getURL('worklet/audio-processor.js'));
+        console.log('AudioWorklet loaded successfully');
+    } catch (err) {
+        console.error('Failed to load AudioWorklet:', err);
+        return;
     }
 
-    // Connect: Filters -> Output Gain -> Limiter -> Destination
-    prevNode.connect(G);
-    G.connect(L);
-    L.connect(M.destination);
+    // Create AudioWorklet node
+    audioWorkletNode = new AudioWorkletNode(M, 'ears-audio-processor');
 
-    // Keep alive
-    setInterval(() => {
-        chrome.runtime.sendMessage({ type: "keepAlive" }).catch(() => { });
-    }, 20000);
+    // Handle messages from worklet
+    audioWorkletNode.port.onmessage = (event) => {
+        if (event.data.type === 'fftData') {
+            // Forward FFT data to popup via BroadcastChannel
+            fftChannel.postMessage({
+                type: 'fft',
+                fft: event.data.data
+            });
+        }
+    };
+
+    // Connect to destination
+    audioWorkletNode.connect(M.destination);
+
+    Z = true;
+    console.log('Audio initialized with AudioWorklet');
 }
 
-function updateFilter(e) {
-    if (!V[e.index]) return;
-    var f = V[e.index];
-    f.gain.value = e.gain;
-    f.frequency.value = e.frequency;
-    f.Q.value = e.q;
+function updateFilter(msg) {
+    if (!audioWorkletNode) return;
+
+    audioWorkletNode.port.postMessage({
+        type: 'modifyFilter',
+        index: msg.index,
+        frequency: msg.frequency,
+        gain: msg.gain,
+        q: msg.q
+    });
 }
 
 function updateGain(val) {
-    if (G) G.gain.value = val;
+    if (!audioWorkletNode) return;
+
+    audioWorkletNode.port.postMessage({
+        type: 'modifyGain',
+        gain: val
+    });
 }
 
-// Set quality mode (without dithering to avoid artifacts)
 function setQualityMode(mode) {
     qualityMode = mode;
 
-    switch (mode) {
-        case 'efficient':
-            H = H_EFFICIENT;
-            if (L) {
-                L.threshold.value = -1;
-                L.knee.value = 6;
-                L.ratio.value = 20;
-            }
-            break;
-        case 'quality':
-            H = H_QUALITY;
-            if (L) {
-                L.threshold.value = -0.5;  // Tighter limiting
-                L.knee.value = 4;          // Softer knee
-                L.ratio.value = 20;
-            }
-            break;
-        case 'hifi':
-            H = H_QUALITY;
-            if (L) {
-                L.threshold.value = -0.3;  // Even tighter
-                L.knee.value = 3;
-                L.ratio.value = 20;
-            }
-            break;
-    }
+    if (!audioWorkletNode) return;
 
-    // Update existing filter Q values
-    for (let j = 0; j < V.length; j++) {
-        if (V[j]) {
-            V[j].Q.value = H[j];
-        }
-    }
+    audioWorkletNode.port.postMessage({
+        type: 'setQualityMode',
+        mode: mode
+    });
 
-    // Notify about mode change
     chrome.runtime.sendMessage({ type: "qualityModeChanged", mode: mode }).catch(() => { });
 }
 
-// Get current limiter gain reduction for metering
-function getLimiterReduction() {
-    return L ? L.reduction : 0;
-}
+async function addStream(stream, tabId) {
+    if (!M) await initAudio();
 
-function addStream(stream, tabId) {
-    if (Y[tabId]) {
-        Y[tabId].stream.getTracks().forEach(t => t.stop());
+    if (M.state === 'suspended') {
+        await M.resume();
     }
 
-    if (Object.keys(Y).length == 0) M.resume();
+    if (Y[tabId]) {
+        removeStream(tabId);
+    }
 
-    var source = M.createMediaStreamSource(stream);
-    source.connect(B);
+    const source = M.createMediaStreamSource(stream);
+    source.connect(audioWorkletNode);
 
-    Y[tabId] = { stream: stream, source: source };
+    Y[tabId] = {
+        stream: stream,
+        source: source
+    };
 
-    // Notify SW we started
-    chrome.runtime.sendMessage({ type: "streamStarted", tabId: tabId });
-
-    // Handle stream ending
     const tracks = stream.getAudioTracks();
     if (tracks.length > 0) {
         tracks[0].onended = () => {
@@ -172,13 +130,13 @@ function removeStream(tabId) {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     switch (msg.type) {
         case "initialState":
-            G.gain.value = msg.gain;
             if (msg.qualityMode) setQualityMode(msg.qualityMode);
             for (let j = 0; j < K; j++) {
                 if (msg.filters[j]) {
                     updateFilter({ index: j, frequency: msg.filters[j].f, gain: msg.filters[j].g, q: msg.filters[j].q });
                 }
             }
+            if (msg.gain) updateGain(msg.gain);
             break;
         case "eqTab":
             if (msg.streamId) {
@@ -204,19 +162,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             updateGain(msg.gain);
             break;
         case "resetFilters":
-            for (let j = 0; j < K; j++) {
-                updateFilter({ index: j, gain: 0, frequency: z[j], q: H[j] });
+            if (audioWorkletNode) {
+                audioWorkletNode.port.postMessage({ type: 'resetFilters' });
             }
-            updateGain(1);
             break;
         case "resetFilter":
-            updateFilter({ index: msg.index, gain: 0, frequency: z[msg.index], q: H[msg.index] });
+            updateFilter({ index: msg.index, gain: 0, frequency: z[msg.index], q: 1.0 });
             break;
         case "setQualityMode":
             setQualityMode(msg.mode);
             break;
         case "getQualityMode":
-            sendResponse({ mode: qualityMode, limiterReduction: getLimiterReduction() });
+            sendResponse({ mode: qualityMode, limiterReduction: 0 });
             return true;
         case "preset":
             applyPreset(msg.preset, msg.presetData);
@@ -231,64 +188,26 @@ const BASS_BOOST_PRESET = {
 
 function applyPreset(presetName, presetData) {
     if (presetName === "bassBoost") {
-        // Apply bass boost preset
         for (let j = 0; j < K; j++) {
             updateFilter({
                 index: j,
                 gain: BASS_BOOST_PRESET.gains[j],
                 frequency: z[j],
-                q: H[j]
+                q: 1.0
             });
         }
         updateGain(1);
     } else if (presetData) {
-        // Apply user preset
         for (let j = 0; j < K; j++) {
             updateFilter({
                 index: j,
                 gain: presetData.gains[j] || 0,
                 frequency: presetData.frequencies[j] || z[j],
-                q: presetData.qs[j] || H[j]
+                q: presetData.qs[j] || 1.0
             });
         }
         updateGain(1);
     }
 }
-
-let fftLoopRunning = false;
-function fftLoop() {
-    if (!fftLoopRunning) return;
-    if (Q) {
-        var array = new Float32Array(Q.frequencyBinCount);
-        Q.getFloatFrequencyData(array);
-        // Include limiter reduction in FFT data for UI metering
-        fftChannel.postMessage({
-            type: "fft",
-            fft: Array.from(array),
-            limiterReduction: getLimiterReduction()
-        });
-    } else {
-        if (M) {
-            Q = M.createAnalyser();
-            Q.fftSize = 4096 * 2;
-            // Smoother visualization (was 0.5)
-            Q.smoothingTimeConstant = 0.75;
-            // Connect analyser after limiter for accurate metering
-            L.connect(Q);
-        }
-    }
-    setTimeout(fftLoop, 1000 / 30); // 30 FPS for visualizer
-}
-
-fftChannel.onmessage = (event) => {
-    if (event.data.type === 'startFFT') {
-        if (!fftLoopRunning) {
-            fftLoopRunning = true;
-            fftLoop();
-        }
-    } else if (event.data.type === 'stopFFT') {
-        fftLoopRunning = false;
-    }
-};
 
 initAudio();
