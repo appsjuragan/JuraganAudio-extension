@@ -1,17 +1,20 @@
-// Service Worker for Ears Audio Toolkit (Manifest V3)
+// Service Worker for Ears Audio Toolkit (Manifest V3) with Quality Modes
 
 // State management
 let state = {
     gain: 1,
     filters: [],
     presets: {},
-    activeStreams: [] // Tab IDs
+    activeStreams: [], // Tab IDs
+    qualityMode: 'efficient' // 'efficient', 'quality', 'hifi'
 };
 
 const PRESETS_PREFIX = "PRESETS.";
 const K = 11;
 const z = [20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480];
-const H = [0.7071, 0.7071, 0.7071, 0.7071, 0.7071, 0.7071, 0.7071, 0.7071, 0.7071, 0.7071, 0.7071];
+// Updated Q values - frequency dependent for better sound
+const H_EFFICIENT = [0.5, 0.55, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.4, 1.6, 0.5];
+const H = H_EFFICIENT;
 
 // Initialize state from storage
 async function initState() {
@@ -27,6 +30,9 @@ async function initState() {
             state.filters.push({ f: z[j], g: 0, q: H[j] });
         }
     }
+
+    // Load quality mode setting
+    state.qualityMode = data.QUALITY_MODE || 'efficient';
 
     const syncData = await chrome.storage.sync.get(null);
     state.presets = {};
@@ -58,7 +64,8 @@ async function ensureOffscreen() {
         chrome.runtime.sendMessage({
             type: "initialState",
             gain: state.gain,
-            filters: state.filters
+            filters: state.filters,
+            qualityMode: state.qualityMode
         });
     }
 }
@@ -97,7 +104,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         'modifyGain',
         'resetFilters',
         'resetFilter',
-        'preset'
+        'preset',
+        'setQualityMode'
     ];
 
     if (offscreenMessages.includes(msg.type)) {
@@ -114,6 +122,34 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             const saveObj = { "GAIN": JSON.stringify(1) };
             for (let j = 0; j < K; j++) saveObj["filter" + j] = JSON.stringify(state.filters[j]);
             chrome.storage.local.set(saveObj);
+        } else if (msg.type === 'setQualityMode') {
+            state.qualityMode = msg.mode;
+            chrome.storage.local.set({ "QUALITY_MODE": msg.mode });
+        } else if (msg.type === 'preset') {
+            // Handle preset application
+            if (msg.preset === 'bassBoost') {
+                // Bass boost preset - update local state
+                const bassBoostGains = [12, 10, 8, 4, 0, 0, 0, 0, 0, 0, 0];
+                state.filters = z.map((f, i) => ({ f: f, g: bassBoostGains[i], q: H[i] }));
+                state.gain = 1;
+                const saveObj = { "GAIN": JSON.stringify(1) };
+                for (let j = 0; j < K; j++) saveObj["filter" + j] = JSON.stringify(state.filters[j]);
+                chrome.storage.local.set(saveObj);
+            } else if (state.presets[msg.preset]) {
+                // User preset - enrich message with preset data
+                msg.presetData = state.presets[msg.preset];
+                // Update local state
+                const presetData = state.presets[msg.preset];
+                state.filters = z.map((f, i) => ({
+                    f: presetData.frequencies[i] || f,
+                    g: presetData.gains[i] || 0,
+                    q: presetData.qs[i] || H[i]
+                }));
+                state.gain = 1;
+                const saveObj = { "GAIN": JSON.stringify(1) };
+                for (let j = 0; j < K; j++) saveObj["filter" + j] = JSON.stringify(state.filters[j]);
+                chrome.storage.local.set(saveObj);
+            }
         }
 
         ensureOffscreen().then(() => {
@@ -121,7 +157,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
 
         // Send updated status to popup for immediate UI refresh
-        if (msg.type === 'modifyFilter' || msg.type === 'modifyGain' || msg.type === 'resetFilters') {
+        if (msg.type === 'modifyFilter' || msg.type === 'modifyGain' || msg.type === 'resetFilters' || msg.type === 'setQualityMode' || msg.type === 'preset') {
             sendFullStatus();
         }
         return;
@@ -157,7 +193,8 @@ async function sendFullStatus() {
         type: "sendWorkspaceStatus",
         eqFilters: filters,
         streams: activeStreamTabs,
-        gain: state.gain
+        gain: state.gain,
+        qualityMode: state.qualityMode
     });
 
     // Also current tab status

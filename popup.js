@@ -121,6 +121,34 @@ function scope() {
             f();
         };
 
+        // Quality mode selector
+        var qualitySelect = document.getElementById("qualityModeSelect");
+        var limiterIndicator = document.getElementById("limiterIndicator");
+
+        qualitySelect.onchange = function () {
+            var mode = this.value;
+            chrome.runtime.sendMessage({ type: "setQualityMode", mode: mode });
+            updateQualityModeUI(mode);
+        };
+
+        function updateQualityModeUI(mode) {
+            qualitySelect.value = mode;
+            qualitySelect.className = mode;
+        }
+
+        // Expose for use in message handler
+        window.updateQualityModeUI = updateQualityModeUI;
+        window.updateLimiterIndicator = function (reduction) {
+            // reduction is negative dB when limiting is active
+            if (reduction < -0.5) {
+                limiterIndicator.classList.add("active");
+                limiterIndicator.title = "Limiter active: " + reduction.toFixed(1) + " dB reduction";
+            } else {
+                limiterIndicator.classList.remove("active");
+                limiterIndicator.title = "Limiter idle";
+            }
+        };
+
         var v = ["tab-1", "tab-2", "tab-3"];
         for (var d = 0; d < v.length; d++) {
             var h = v[d];
@@ -185,6 +213,10 @@ function scope() {
         if (e.type == "sendWorkspaceStatus") {
             i = false;
             J(e);
+            // Update quality mode UI
+            if (e.qualityMode && window.updateQualityModeUI) {
+                window.updateQualityModeUI(e.qualityMode);
+            }
         }
         if (e.type == "sendSampleRate") {
             E = e.Fs;
@@ -211,6 +243,10 @@ function scope() {
     fftChannel.onmessage = (event) => {
         if (event.data.type === 'fft') {
             U(event.data);
+            // Update limiter indicator
+            if (event.data.limiterReduction !== undefined && window.updateLimiterIndicator) {
+                window.updateLimiterIndicator(event.data.limiterReduction);
+            }
         }
     };
 

@@ -343,3 +343,70 @@ button :focus {}
 #requiresProDiv.show {
 	opacity: 1;
 }
+
+/* Quality Mode Selector */
+#qualityModeSelect {
+	background-color: #2C3E50;
+	color: wheat;
+	border: 1px solid wheat;
+	border-radius: 3px;
+	font-size: 12px;
+	padding: 2px 6px;
+	cursor: pointer;
+	outline: none;
+	margin-left: 5px;
+	height: 24px;
+}
+
+#qualityModeSelect:hover {
+	background-color: #3d5166;
+}
+
+#qualityModeSelect option {
+	background-color: #2C3E50;
+	color: wheat;
+}
+
+/* Limiter indicator */
+#limiterIndicator {
+	font-size: 10px;
+	color: #666;
+	margin-left: 5px;
+	padding: 2px 4px;
+	border: 1px solid #666;
+	border-radius: 3px;
+	opacity: 0.3;
+	transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+#limiterIndicator.active {
+	opacity: 1;
+	color: #ff6b6b;
+	border-color: #ff6b6b;
+	animation: limiter-pulse 0.5s ease infinite;
+}
+
+@keyframes limiter-pulse {
+
+	0%,
+	100% {
+		opacity: 0.7;
+	}
+
+	50% {
+		opacity: 1;
+	}
+}
+
+/* Quality mode indicator colors */
+#qualityModeSelect.efficient {
+	border-color: #4CAF50;
+}
+
+#qualityModeSelect.quality {
+	border-color: #2196F3;
+}
+
+#qualityModeSelect.hifi {
+	border-color: #9C27B0;
+}

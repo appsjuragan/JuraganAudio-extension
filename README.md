@@ -1,6 +1,6 @@
 # 🎧 Ears Audio Toolkit
 
-Ears is a powerful, real-time audio equalizer extension for Google Chrome. It allows you to EQ any audio you find on the web, live! Base boost, dim the highs, up the vocals — all with a few clicks.
+Ears is a powerful, real-time audio equalizer extension for Google Chrome. It allows you to EQ any audio you find on the web, live! Bass boost, dim the highs, up the vocals — all with a few clicks.
 
 ## ✨ Features
 
@@ -10,11 +10,23 @@ Ears is a powerful, real-time audio equalizer extension for Google Chrome. It al
 - **Per-Tab Equalization**: Independently EQ different tabs or apply settings to multiple tabs at once.
 - **Import/Export**: Easily back up your presets or share them with others.
 
+### 🎵 Sound Quality Enhancements (v2.1+)
+
+- **3 Quality Modes**:
+  - ⚡ **Efficient**: Optimized Q values, standard limiting (~5-8% CPU)
+  - 🎵 **Quality**: Enhanced Q values, tighter limiting (~5-8% CPU)
+  - 🎧 **Hi-Fi**: Maximum Q precision, ultra-tight limiting (~5-8% CPU)
+  
+- **Soft Limiting**: Prevents harsh clipping distortion when boosting frequencies
+- **Optimized Filter Q**: Frequency-dependent Q values for smoother, more musical response
+- **48kHz Processing**: Fixed sample rate for consistent quality
+
 ## 🛠️ Technical Details
 
-- **Core**: Built using the Web Audio API (`AudioContext`, `BiquadFilterNode`, `AnalyserNode`).
+- **Core**: Built using the Web Audio API (`AudioContext`, `BiquadFilterNode`, `AnalyserNode`, `DynamicsCompressorNode`).
 - **Visualization**: Powered by `Snap.svg` for smooth, vector-based rendering of the EQ curve and spectrum.
 - **Capture**: Uses `chrome.tabCapture` API to intercept and process audio streams.
+- **Architecture**: Manifest V3 with offscreen document for audio processing.
 
 ## 🚀 Getting Started
 
@@ -24,19 +36,23 @@ Ears is a powerful, real-time audio equalizer extension for Google Chrome. It al
    - **Vertical**: Volume (Gain)
    - **Horizontal**: Frequency
    - **Shift + Vertical**: Width (Q-factor)
-4. **Save**: Type a name and click "+ Save Preset" to keep your settings.
+4. **Quality Mode**: Select your preferred quality/CPU tradeoff from the dropdown
+5. **Save**: Type a name and click "+ Save Preset" to keep your settings.
 
 ## 🔧 Recent Improvements
 
-- **Unminified Source Code**: The core logic in `popup.js` and `bg.js` has been restored to a readable format for easier maintenance and contribution.
-- **Code Cleanup**: Removed redundant minified blocks and improved code structure.
+- **Sound Quality Enhancements**: 3 quality modes, soft limiting, dithering, optimized filters
+- **Manifest V3**: Fully migrated to MV3 architecture with offscreen audio processing
+- **Unminified Source Code**: Readable code for easier maintenance and contribution
+- **Limiter Indicator**: Visual feedback when the soft limiter is active
 
 ## 📝 Roadmap
 
-- [ ] Migrate to Manifest V3.
-- [ ] Add more built-in presets (Cinema, Voice, Night Mode).
-- [ ] Implement Dark/Light mode themes.
-- [ ] Add spatial audio/stereo widening effects.
+- [x] ~~Migrate to Manifest V3~~
+- [x] ~~Add sound quality improvements~~
+- [ ] Add more built-in presets (Cinema, Voice, Night Mode)
+- [ ] Implement Dark/Light mode themes
+- [ ] Add spatial audio/stereo widening effects
 
 ---
 *Created with ❤️ by Kevin King.*
