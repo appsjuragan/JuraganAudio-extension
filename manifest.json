@@ -32,7 +32,8 @@
          "resources": [
             "worklet/audio-processor.js",
             "worklet/juragan_audio_dsp.js",
-            "worklet/juragan_audio_dsp_bg.wasm"
+            "worklet/juragan_audio_dsp_bg.wasm",
+            "worklet/polyfill.js"
          ],
          "matches": [
             "<all_urls>"
