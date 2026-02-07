@@ -52,8 +52,7 @@ body {
 /* Adjust MainDiv to not be fixed height if possible, or just fixed */
 #mainDiv {
 	position: relative;
-	height: 450px;
-	/* Increased to fit 360px SVG + 80px padding */
+	height: 340px;
 	flex-shrink: 0;
 	background: radial-gradient(circle at 50% -20%, #1e1b4b 0%, var(--bg-void) 60%);
 }
@@ -172,7 +171,7 @@ body>input#tab-3:checked~h1 #tabNav label[for="tab-3"] {
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
-	padding-top: 5px;
+	padding-top: 10px;
 	/* Tabs are in header now, move to top */
 	z-index: 10;
 
@@ -377,25 +376,23 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	background: rgba(13, 14, 18, 0.98);
 	backdrop-filter: blur(20px);
 	border-bottom: 1px solid var(--bg-glass-border);
-	/* Changed to bottom since it's at the top */
-	padding: 16px 20px;
+	padding: 8px 16px;
 	flex-shrink: 0;
 	z-index: 100;
 	box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
-	/* Shadow below */
 }
 
 .dashboard-grid {
 	display: grid;
 	grid-template-columns: 140px 1fr 180px;
-	gap: 20px;
+	gap: 10px;
 	align-items: center;
 }
 
 .dash-section {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 4px;
 }
 
 /* Grouping functional elements */
@@ -437,7 +434,7 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	gap: 6px;
 	padding: 0 12px;
 	font-weight: 600;
-	height: 34px;
+	height: 30px;
 	border-radius: var(--radius-sm);
 }
 
@@ -452,7 +449,7 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 	background: rgba(239, 68, 68, 0.05);
 	border: 1px solid rgba(239, 68, 68, 0.2);
 	color: #f87171;
-	height: 34px;
+	height: 30px;
 	font-weight: 500;
 }
 
@@ -464,18 +461,18 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 /* Preset Elements */
 #presetSelect {
 	width: 100%;
-	height: 34px;
+	height: 30px;
 	background: rgba(255, 255, 255, 0.05);
 }
 
 #presetNameInput {
 	flex: 1;
-	height: 34px;
+	height: 30px;
 }
 
 .preset-input-group button {
-	width: 34px;
-	height: 34px;
+	width: 30px;
+	height: 30px;
 	flex-shrink: 0;
 	font-size: 14px;
 }
@@ -483,12 +480,12 @@ body>input#tab-3:checked~#mainDiv #tabsDiv {
 /* Right Section Buttons */
 #qualityModeSelect {
 	flex: 1;
-	height: 34px;
+	height: 30px;
 }
 
 #vizButton {
 	width: 80px;
-	height: 34px;
+	height: 30px;
 }
 
 #vizButton.on {
@@ -511,13 +508,13 @@ input {
 	border-radius: var(--radius-sm);
 	transition: all var(--anim-fast);
 	background: rgba(255, 255, 255, 0.05);
-	/* Ensure dark theme */
 	color: var(--text-main);
 	border: 1px solid var(--bg-glass-border);
 	outline: none;
 	padding: 0 10px;
 	font-family: var(--font-family);
 	font-size: 11px;
+	height: 30px;
 }
 
 select option {
