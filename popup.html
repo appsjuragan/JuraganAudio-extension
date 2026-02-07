@@ -76,30 +76,54 @@
       <div id="eqTabList"></div>
     </div>
   </div>
-  <div id="filterButtonsDiv">
-    <input id="presetNameInput" type="text" placeholder="Preset Name" />
-    <button id="savePresetButton">+ Save Preset</button>
-    <button id="deletePresetButton">- Delete Preset</button>
-    <button id="resetFiltersButton">Reset Filters</button>
-    <button id="exportPresetsButton" title="Export all saved presets to a file.">
-      Export Presets
-    </button>
-    <button id="importPresetsButton" title="Import presets that were exported from Ears.">
-      Import Presets
-    </button>
-    <input type="file" id="importPresetsFile" />
-  </div>
-  <div id="presetDiv">
-    <button id="bassBoostButton">Bass Boost</button>
-    <button id="vizButton" class="on">Spectrum Visualizer</button>
-    <select id="qualityModeSelect" title="Audio quality mode">
-      <option value="efficient">Efficient</option>
-      <option value="quality">Quality</option>
-      <option value="hifi">Hi-Fi</option>
-    </select>
-    <span id="limiterIndicator" title="Limiter active - preventing clipping">LIM</span>
-    <span id="userPresetSpan"></span>
-  </div>
+    <div id="bottomControls">
+      <!-- Row 1: Hi-Fi, Preset Select, Visualizer -->
+      <div class="control-row top-row">
+        <div class="left-controls">
+          <select id="qualityModeSelect" title="Audio quality mode">
+            <option value="efficient">Efficient</option>
+            <option value="quality">Quality</option>
+            <option value="hifi">Hi-Fi</option>
+          </select>
+        </div>
+        
+        <div class="center-controls">
+           <select id="presetSelect" title="Select a preset">
+             <option value="" disabled selected>Select preset</option>
+           </select>
+           <!-- Hidden original container if needed by JS, or we update JS -->
+           <span id="userPresetSpan" style="display:none;"></span> 
+        </div>
+
+        <div class="right-controls">
+           <button id="vizButton">Spectrum Visualizer</button>
+        </div>
+      </div>
+
+      <!-- Row 2: Reset, Input, Action Buttons -->
+      <div class="control-row bottom-row">
+        <button id="resetFiltersButton">Reset Filters</button>
+        
+        <input id="presetNameInput" type="text" placeholder="Preset Name" />
+        
+        <div class="action-columns">
+          <div class="action-col">
+            <button id="savePresetButton">+ Save Preset</button>
+            <button id="deletePresetButton">- Delete Preset</button>
+          </div>
+          <div class="action-col">
+            <button id="exportPresetsButton">Export Presets</button>
+            <button id="importPresetsButton">Import Presets</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Hidden elements that were present before but not in new design explicitly -->
+      <div style="display:none;">
+        <button id="bassBoostButton">Bass Boost</button>
+        <input type="file" id="importPresetsFile" />
+      </div>
+    </div>
   <div id="eqThisTabDiv">
     <button id="eqTabButton" class="center">EQ Current Tab</button>
   </div>

@@ -141,9 +141,16 @@ async function addStream(stream, tabId) {
 
 function removeStream(tabId) {
     if (Y[tabId]) {
-        Y[tabId].stream.getTracks().forEach(t => t.stop());
-        Y[tabId].source.disconnect();
+        const streamInfo = Y[tabId];
         delete Y[tabId];
+
+        try {
+            streamInfo.stream.getTracks().forEach(t => t.stop());
+            streamInfo.source.disconnect();
+        } catch (e) {
+            console.error("Error stopping stream:", e);
+        }
+
         chrome.runtime.sendMessage({ type: "streamEnded", tabId: tabId });
     }
     if (Object.keys(Y).length == 0) M.suspend();
@@ -179,8 +186,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                 }).then(stream => {
                     addStream(stream, msg.tabId);
                 }).catch(err => {
-                    console.error("Error capturing tab:", err.message);
-                    // Notify service worker about the error
+                    // console.error("Error capturing tab:", err.message);
+                    // Notify service worker about the error but suppress console noise
                     chrome.runtime.sendMessage({ type: "captureError", tabId: msg.tabId, error: err.message });
                 });
             } else if (msg.on === false) {
@@ -239,7 +246,7 @@ function applyPreset(presetName, presetData) {
                 q: presetData.qs[j] || 1.0
             });
         }
-        updateGain(1);
+        updateGain((presetData.gain !== undefined) ? presetData.gain : 1);
     }
 }
 

@@ -145,8 +145,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     g: presetData.gains[i] || 0,
                     q: presetData.qs[i] || H[i]
                 }));
-                state.gain = 1;
-                const saveObj = { "GAIN": JSON.stringify(1) };
+                state.gain = (presetData.gain !== undefined) ? presetData.gain : 1;
+                const saveObj = { "GAIN": JSON.stringify(state.gain) };
                 for (let j = 0; j < K; j++) saveObj["filter" + j] = JSON.stringify(state.filters[j]);
                 chrome.storage.local.set(saveObj);
             }
@@ -157,7 +157,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
 
         // Send updated status to popup for immediate UI refresh
-        if (msg.type === 'modifyFilter' || msg.type === 'modifyGain' || msg.type === 'resetFilters' || msg.type === 'setQualityMode' || msg.type === 'preset') {
+        if (msg.type === 'resetFilters' || msg.type === 'setQualityMode' || msg.type === 'preset') {
             sendFullStatus();
         }
         return;
@@ -219,7 +219,8 @@ async function handleSavePreset(msg) {
     const presetData = {
         frequencies: state.filters.map(f => f.f),
         gains: state.filters.map(f => f.g),
-        qs: state.filters.map(f => f.q)
+        qs: state.filters.map(f => f.q),
+        gain: state.gain // Save master gain
     };
 
     const saveObj = {};

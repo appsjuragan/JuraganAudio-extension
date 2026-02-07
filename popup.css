@@ -122,24 +122,107 @@ input.visible {
 	clear: both;
 }
 
-#filterButtonsDiv {
-	float: right;
-	margin-bottom: 10px;
+#bottomControls {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin-top: 10px;
+	padding: 0 10px;
 }
 
-#filterButtonsDiv button {
-	margin-left: 5px;
+.control-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
 }
 
-#presetDiv button {
-	margin-left: 5px;
+.top-row {
 	margin-bottom: 5px;
 }
 
-#presetDiv {
-	float: right;
-	margin-bottom: 10px;
-	clear: both;
+.bottom-row {
+	justify-content: space-between;
+	align-items: stretch;
+	/* Stretch to fill height */
+}
+
+/* Specific alignments for Top Row */
+.left-controls {
+	flex: 0 0 auto;
+}
+
+.center-controls {
+	flex: 1;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.right-controls {
+	flex: 0 0 auto;
+}
+
+/* Preset Select */
+#presetSelect {
+	background-color: #2C3E50;
+	color: wheat;
+	border: 1px solid wheat;
+	border-radius: 3px;
+	padding: 2px 5px;
+	font-size: 14px;
+	width: 200px;
+	outline: none;
+	height: 24px;
+}
+
+/* Bottom Row Items */
+#resetFiltersButton {
+	white-space: nowrap;
+	margin-right: 5px;
+	height: 48px;
+	/* Taller button */
+	cursor: pointer;
+	flex: 0 0 auto;
+}
+
+#presetNameInput {
+	flex: 1;
+	margin-right: 5px;
+	height: 48px !important;
+	/* Force height */
+	box-sizing: border-box;
+	width: 100px !important;
+	/* Override width: 75px */
+	padding: 0 5px;
+	font-size: 14px;
+}
+
+.action-columns {
+	display: flex;
+	gap: 5px;
+}
+
+.action-col {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.action-col button {
+	margin: 0 !important;
+	width: 110px;
+	font-size: 11px;
+	padding: 2px 5px;
+	cursor: pointer;
+	height: 22px;
+	/* Fixed height for stacked buttons */
+}
+
+#vizButton {
+	margin: 0;
+	height: 24px;
+	cursor: pointer;
 }
 
 #eqTabList span,
@@ -292,7 +375,15 @@ button :focus {}
 }
 
 #eqThisTabDiv {
-	clear: both;
+	position: absolute;
+	top: 48px;
+	right: 15px;
+	z-index: 500;
+}
+
+#eqThisTabDiv button {
+	margin: 0;
+	display: inline-block;
 }
 
 #eqOptionsDiv {
