@@ -1,6 +1,6 @@
-# 🎧 Ears Audio Toolkit
+# 🎧 JuraganAudio Toolkit
 
-Ears is a powerful, real-time audio equalizer extension for Google Chrome. It allows you to EQ any audio you find on the web, live! Bass boost, dim the highs, up the vocals — all with a few clicks.
+JuraganAudio is a powerful, real-time audio equalizer extension for Google Chrome. It allows you to EQ any audio you find on the web, live! Bass boost, dim the highs, up the vocals — all with a few clicks.
 
 ## ✨ Features
 
@@ -24,34 +24,32 @@ Ears is a powerful, real-time audio equalizer extension for Google Chrome. It al
 ## 🛠️ Technical Details
 
 - **Core**: Built using the Web Audio API (`AudioWorklet`, `AudioContext`).
-- **Processing**: Custom 11-band EQ and soft limiter implemented in `AudioWorklet` for glitch-free performance.
-- **Visualization**: powered by **WebGPU** for silky smooth 60FPS spectrum rendering (with Canvas 2D fallback).
-- **Architecture**: Manifest V3 with offscreen document for audio processing. Rust DSP library ready for future WebAssembly integration.
+- **Processing**: High-performance Rust-based DSP engine compiled to **WebAssembly (WASM)** for superior audio quality and efficiency.
+- **Visualization**: Powered by **Snap.svg** for high-quality, crisp vector-based spectrum rendering.
+- **Architecture**: Manifest V3 with offscreen document for persistent audio processing.
 
 ## 🚀 Getting Started
 
 1. **Install**: Load as an unpacked extension in Chrome.
-2. **Activate**: Click the Ears icon in your toolbar to add the current tab to Ears.
+2. **Activate**: Click the JuraganAudio icon in your toolbar and click "EQ this tab".
 3. **Adjust**: Drag the dots on the graph to change frequencies and gain.
-   - **Vertical**: Volume (Gain)
-   - **Horizontal**: Frequency
-   - **Shift + Vertical**: Width (Q-factor)
-4. **Quality Mode**: Select your preferred quality/CPU tradeoff from the dropdown
-5. **Save**: Type a name and click "+ Save Preset" to keep your settings.
+4. **Quality Mode**: Select your preferred quality/CPU tradeoff from the dropdown.
+5. **Save**: Type a name and click "+" to save your preset.
 
 ## 🔧 Recent Improvements
 
-- **Next-Gen Engine**: Migrated from `BiquadFilterNode` to `AudioWorklet` for superior performance and flexibility
-- **WebGPU Visualizer**: New high-performance spectrum analyzer
-- **Sound Quality**: 3 quality modes, intelligent soft limiting, frequency-dependent Q
-- **Manifest V3**: Fully migrated architecture
-- **Rust DSP**: Core signal processing logic ported to Rust (ready for Wasm)
+- **WASM Audio Engine**: Fully integrated Rust DSP for 11-band parametric EQ and professional soft limiting.
+- **Spectrum Visualizer**: Optimized SVG-based real-time analysis.
+- **Sound Quality**: 3 quality modes, intelligent soft limiting, and frequency-dependent Q.
+- **Manifest V3**: State-of-the-art extension architecture.
+- **JuraganAudio Refresh**: Complete branding revamp for a premium experience.
 
 ## 📝 Roadmap
 
 - [x] ~~Migrate to Manifest V3~~
 - [x] ~~Add sound quality improvements~~
 - [x] ~~Implement Dark/Light mode themes~~
+- [x] ~~Full Rust DSP / WebAssembly integration~~
 - [ ] Add more built-in presets (Cinema, Voice, Night Mode)
 - [ ] Add spatial audio/stereo widening effects
 

@@ -1,24 +1,24 @@
 {
    "manifest_version": 3,
-   "name": "Ears: Bass Boost, EQ Any Audio!",
+   "name": "JuraganAudio: Bass Boost, EQ Any Audio!",
    "version": "2.0.0",
    "author": "Kevin King",
-   "description": "EQ any audio you find on the web, live! Crank the bass, dim the highs, up the vocals: all with Ears!",
-   "short_name": "Ears",
+   "description": "EQ any audio you find on the web, live! Crank the bass, dim the highs, up the vocals: all with JuraganAudio!",
+   "short_name": "JuraganAudio",
    "background": {
       "service_worker": "service-worker.js",
       "type": "module"
    },
    "action": {
-      "default_icon": "ears128.png",
+      "default_icon": "juraganaudio128.png",
       "default_popup": "popup.html"
    },
    "icons": {
-      "128": "ears128.png",
-      "16": "ears16.png",
-      "32": "ears32.png",
-      "48": "ears48.png",
-      "64": "ears64.png"
+      "128": "juraganaudio128.png",
+      "16": "juraganaudio16.png",
+      "32": "juraganaudio32.png",
+      "48": "juraganaudio48.png",
+      "64": "juraganaudio64.png"
    },
    "permissions": [
       "activeTab",
@@ -31,8 +31,9 @@
       {
          "resources": [
             "worklet/audio-processor.js",
-            "worklet/ears_dsp.js",
-            "worklet/ears_dsp_bg.wasm"
+            "worklet/juragan_audio_dsp.js",
+            "worklet/juragan_audio_dsp_bg.wasm",
+            "worklet/polyfill.js"
          ],
          "matches": [
             "<all_urls>"

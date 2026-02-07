@@ -1,15 +1,15 @@
-/* @ts-self-types="./ears_dsp.d.ts" */
+/* @ts-self-types="./juragan_audio_dsp.d.ts" */
 
-export class EarsDSP {
+export class JuraganAudioDSP {
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
         this.__wbg_ptr = 0;
-        EarsDSPFinalization.unregister(this);
+        JuraganAudioDSPFinalization.unregister(this);
         return ptr;
     }
     free() {
         const ptr = this.__destroy_into_raw();
-        wasm.__wbg_earsdsp_free(ptr, 0);
+        wasm.__wbg_juraganaudiodsp_free(ptr, 0);
     }
     /**
      * @param {Float32Array} input
@@ -18,7 +18,7 @@ export class EarsDSP {
     get_fft(input) {
         const ptr0 = passArrayF32ToWasm0(input, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.earsdsp_get_fft(this.__wbg_ptr, ptr0, len0);
+        const ret = wasm.juraganaudiodsp_get_fft(this.__wbg_ptr, ptr0, len0);
         var v2 = getArrayF32FromWasm0(ret[0], ret[1]).slice();
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
         return v2;
@@ -27,16 +27,16 @@ export class EarsDSP {
      * @returns {number}
      */
     get_reduction_db() {
-        const ret = wasm.earsdsp_get_reduction_db(this.__wbg_ptr);
+        const ret = wasm.juraganaudiodsp_get_reduction_db(this.__wbg_ptr);
         return ret;
     }
     /**
      * @param {number} sample_rate
      */
     constructor(sample_rate) {
-        const ret = wasm.earsdsp_new(sample_rate);
+        const ret = wasm.juraganaudiodsp_new(sample_rate);
         this.__wbg_ptr = ret >>> 0;
-        EarsDSPFinalization.register(this, this.__wbg_ptr, this);
+        JuraganAudioDSPFinalization.register(this, this.__wbg_ptr, this);
         return this;
     }
     /**
@@ -48,7 +48,7 @@ export class EarsDSP {
         const len0 = WASM_VECTOR_LEN;
         var ptr1 = passArrayF32ToWasm0(output, wasm.__wbindgen_malloc);
         var len1 = WASM_VECTOR_LEN;
-        wasm.earsdsp_process_block(this.__wbg_ptr, ptr0, len0, ptr1, len1, output);
+        wasm.juraganaudiodsp_process_block(this.__wbg_ptr, ptr0, len0, ptr1, len1, output);
     }
     /**
      * @param {number} index
@@ -58,40 +58,40 @@ export class EarsDSP {
      * @param {number} gain
      */
     set_filter(index, type_id, freq, q, gain) {
-        wasm.earsdsp_set_filter(this.__wbg_ptr, index, type_id, freq, q, gain);
+        wasm.juraganaudiodsp_set_filter(this.__wbg_ptr, index, type_id, freq, q, gain);
     }
     /**
      * @param {number} val
      */
     set_gain(val) {
-        wasm.earsdsp_set_gain(this.__wbg_ptr, val);
+        wasm.juraganaudiodsp_set_gain(this.__wbg_ptr, val);
     }
     /**
      * @param {number} threshold
      * @param {number} knee
      */
     set_limiter(threshold, knee) {
-        wasm.earsdsp_set_limiter(this.__wbg_ptr, threshold, knee);
+        wasm.juraganaudiodsp_set_limiter(this.__wbg_ptr, threshold, knee);
     }
     /**
      * @param {boolean} active
      */
     set_sbr_active(active) {
-        wasm.earsdsp_set_sbr_active(this.__wbg_ptr, active);
+        wasm.juraganaudiodsp_set_sbr_active(this.__wbg_ptr, active);
     }
 }
-if (Symbol.dispose) EarsDSP.prototype[Symbol.dispose] = EarsDSP.prototype.free;
+if (Symbol.dispose) JuraganAudioDSP.prototype[Symbol.dispose] = JuraganAudioDSP.prototype.free;
 
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
-        __wbg___wbindgen_copy_to_typed_array_fc0809a4dec43528: function (arg0, arg1, arg2) {
+        __wbg___wbindgen_copy_to_typed_array_fc0809a4dec43528: function(arg0, arg1, arg2) {
             new Uint8Array(arg2.buffer, arg2.byteOffset, arg2.byteLength).set(getArrayU8FromWasm0(arg0, arg1));
         },
-        __wbg___wbindgen_throw_be289d5034ed271b: function (arg0, arg1) {
+        __wbg___wbindgen_throw_be289d5034ed271b: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
-        __wbindgen_init_externref_table: function () {
+        __wbindgen_init_externref_table: function() {
             const table = wasm.__wbindgen_externrefs;
             const offset = table.grow(4);
             table.set(0, undefined);
@@ -103,13 +103,13 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./ears_dsp_bg.js": import0,
+        "./juragan_audio_dsp_bg.js": import0,
     };
 }
 
-const EarsDSPFinalization = (typeof FinalizationRegistry === 'undefined')
-    ? { register: () => { }, unregister: () => { } }
-    : new FinalizationRegistry(ptr => wasm.__wbg_earsdsp_free(ptr >>> 0, 1));
+const JuraganAudioDSPFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_juraganaudiodsp_free(ptr >>> 0, 1));
 
 function getArrayF32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
@@ -149,20 +149,14 @@ function passArrayF32ToWasm0(arg, malloc) {
     return ptr;
 }
 
-let cachedTextDecoder = (typeof TextDecoder !== 'undefined'
-    ? new TextDecoder('utf-8', { ignoreBOM: true, fatal: true })
-    : { decode: () => { return ""; } }
-);
+let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
 cachedTextDecoder.decode();
 const MAX_SAFARI_DECODE_BYTES = 2146435072;
 let numBytesDecoded = 0;
 function decodeText(ptr, len) {
     numBytesDecoded += len;
     if (numBytesDecoded >= MAX_SAFARI_DECODE_BYTES) {
-        cachedTextDecoder = (typeof TextDecoder !== 'undefined'
-            ? new TextDecoder('utf-8', { ignoreBOM: true, fatal: true })
-            : { decode: () => { return ""; } }
-        );
+        cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
         cachedTextDecoder.decode();
         numBytesDecoded = len;
     }
@@ -222,7 +216,7 @@ function initSync(module) {
 
     if (module !== undefined) {
         if (Object.getPrototypeOf(module) === Object.prototype) {
-            ({ module } = module)
+            ({module} = module)
         } else {
             console.warn('using deprecated parameters for `initSync()`; pass a single object instead')
         }
@@ -242,14 +236,14 @@ async function __wbg_init(module_or_path) {
 
     if (module_or_path !== undefined) {
         if (Object.getPrototypeOf(module_or_path) === Object.prototype) {
-            ({ module_or_path } = module_or_path)
+            ({module_or_path} = module_or_path)
         } else {
             console.warn('using deprecated parameters for the initialization function; pass a single object instead')
         }
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('ears_dsp_bg.wasm', import.meta.url);
+        module_or_path = new URL('juragan_audio_dsp_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

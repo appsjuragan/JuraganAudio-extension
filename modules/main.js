@@ -19,7 +19,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // The workspace status message will tell us if we're already streaming
 
     // Check initial visualizer state
-    Visualizer.init(null); // Limiter updates handled in main loop now
+    Visualizer.init(null);
+    if (Visualizer.isVisualizerOn()) {
+        Visualizer.startOrStopVisualizer();
+    }
 
     // EQ Graph callbacks
     EQGraph.init({
@@ -173,7 +176,7 @@ function updateTabsList(streams) {
 
         const img = document.createElement("img");
         img.className = "tab-favicon";
-        img.src = stream.favIconUrl || 'ears16.png';
+        img.src = stream.favIconUrl || 'juraganaudio16.png';
         img.alt = "";
 
         const title = document.createElement("span");

@@ -1,5 +1,5 @@
 [package]
-name = "ears-dsp"
+name = "juragan-audio-dsp"
 version = "0.1.0"
 authors = ["Kevin King"]
 edition = "2021"

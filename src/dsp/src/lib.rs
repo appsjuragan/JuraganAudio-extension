@@ -54,7 +54,7 @@ impl SBRProcessor {
 }
 
 #[wasm_bindgen]
-pub struct EarsDSP {
+pub struct JuraganAudioDSP {
     filters: Vec<BiquadFilter>,
     limiter: Limiter,
     sbr: SBRProcessor,
@@ -64,7 +64,7 @@ pub struct EarsDSP {
 }
 
 #[wasm_bindgen]
-impl EarsDSP {
+impl JuraganAudioDSP {
     #[wasm_bindgen(constructor)]
     pub fn new(sample_rate: f32) -> Self {
         let mut filters = Vec::with_capacity(11);

@@ -66,7 +66,7 @@ export async function exportPresets() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "ears_presets.json";
+    a.download = "juraganaudio_presets.json";
     document.body.appendChild(a);
     a.click();
 

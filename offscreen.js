@@ -8,7 +8,7 @@ var Z = false; // Is Audio Initialized
 // Quality mode settings
 var qualityMode = 'efficient'; // 'efficient', 'quality', 'hifi'
 
-const fftChannel = new BroadcastChannel('ears_fft');
+const fftChannel = new BroadcastChannel('juragan_audio_fft');
 
 // AudioWorklet node
 var audioWorkletNode = null;
@@ -23,17 +23,13 @@ const K = 11;
 const z = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 12000, 16000];
 
 async function initAudio() {
-    console.log("Offscreen init. Runtime URL:", chrome.runtime.getURL(''));
 
     // Attempt to get our own tab ID if possible
     try {
         if (chrome.tabs && chrome.tabs.getCurrent) {
-            chrome.tabs.getCurrent(tab => {
-                if (tab) console.log("Offscreen Tab ID found:", tab.id);
-                else console.log("Offscreen Tab ID is null (expected).");
-            });
+            chrome.tabs.getCurrent(tab => { });
         }
-    } catch (e) { console.log("Can't get current tab:", e); }
+    } catch (e) { }
 
     if (Z) return;
 
@@ -45,19 +41,18 @@ async function initAudio() {
     // Load AudioWorklet processor
     try {
         await M.audioWorklet.addModule(chrome.runtime.getURL('worklet/audio-processor.js'));
-        console.log('AudioWorklet loaded successfully');
     } catch (err) {
         console.error('Failed to load AudioWorklet:', err);
         return;
     }
 
     // Load and compile Wasm module
-    const response = await fetch(chrome.runtime.getURL('worklet/ears_dsp_bg.wasm'));
+    const response = await fetch(chrome.runtime.getURL('worklet/juragan_audio_dsp_bg.wasm'));
     const bytes = await response.arrayBuffer();
     const wasmModule = await WebAssembly.compile(bytes);
 
     // Create AudioWorklet node
-    audioWorkletNode = new AudioWorkletNode(M, 'ears-audio-processor', {
+    audioWorkletNode = new AudioWorkletNode(M, 'juragan-audio-processor', {
         processorOptions: {
             wasmModule: wasmModule
         }
@@ -91,7 +86,6 @@ async function initAudio() {
     audioWorkletNode.connect(analyserNode);
 
     Z = true;
-    console.log('Audio initialized with AudioWorklet + AnalyserNode');
 }
 
 function updateFilter(msg) {
@@ -276,9 +270,15 @@ function fftLoop() {
         var array = new Float32Array(analyserNode.frequencyBinCount);
         analyserNode.getFloatFrequencyData(array); // Returns dB values (-Infinity to 0)
 
+        const fftData = Array.from(array).map(v => {
+            if (!isFinite(v) || v < -100) return -100;
+            if (v > 0) return 0;
+            return v;
+        });
+
         fftChannel.postMessage({
             type: 'fft',
-            fft: Array.from(array),
+            fft: fftData,
             limiterReduction: currentLimiterReduction
         });
     }

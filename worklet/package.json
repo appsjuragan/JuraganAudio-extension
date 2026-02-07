@@ -1,0 +1,18 @@
+{
+  "name": "juragan-audio-dsp",
+  "type": "module",
+  "collaborators": [
+    "Kevin King"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "juragan_audio_dsp_bg.wasm",
+    "juragan_audio_dsp.js",
+    "juragan_audio_dsp.d.ts"
+  ],
+  "main": "juragan_audio_dsp.js",
+  "types": "juragan_audio_dsp.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

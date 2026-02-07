@@ -1,4 +1,4 @@
-// Service Worker for Ears Audio Toolkit (Manifest V3) with Quality Modes
+// Service Worker for JuraganAudio Toolkit (Manifest V3) with Quality Modes
 
 // State management
 let state = {
