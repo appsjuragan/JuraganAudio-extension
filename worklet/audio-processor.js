@@ -2,72 +2,43 @@
 
 import './polyfill.js';
 import init, { JuraganAudioDSP } from './juragan_audio_dsp.js';
+import { JuraganAudioFilters } from './modules/filters.js';
+import { JuraganAudioFFT } from './modules/fft.js';
+import { JuraganAudioDynamics } from './modules/dynamics.js';
+import { JuraganAudioSBR } from './modules/sbr.js';
 
 class JuraganAudioProcessor extends AudioWorkletProcessor {
     constructor(options) {
         super();
         this.wasmModule = options?.processorOptions?.wasmModule;
 
-        // Audio processing state
-        this.filters = [];
-        this.limiter = null;
+        // Settings / User Options
         this.outputGain = 1.0;
-        this.qualityMode = 'efficient';
-        this.minReduction = 1.0;
+        this.visualizerFps = 30;
+        this.framesPerRender = sampleRate / 30;
+        this.samplesSinceLastFft = 0;
 
-        // FFT analysis initialization
-        this.fftSize = 4096 * 2;
-        this.fftBuffer = new Float32Array(this.fftSize);
-        this.fftPosition = 0;
-        this.fftCounter = 0;
-
-        // SBR State
-        this.sbrActive = false;
-        this.sbrGain = 0.0;
-        this.sbrHp1 = { x1: 0, y1: 0 };
-        this.sbrHp2 = { x1: 0, y1: 0 };
-
-        // Wasm State
-        this.wasmDSP = null;
-        this.wasmLoaded = false;
-        this.wasmInputPtr = 0;
-        this.wasmOutputPtr = 0;
-        this.wasmMemory = null;
-
-        // Filter configuration
-        this.sampleRate = sampleRate;
+        // Modules
+        // Filters
         this.numFilters = 11;
         this.centerFrequencies = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 12000, 16000];
+        this.filters = new JuraganAudioFilters(sampleRate, this.numFilters, this.centerFrequencies);
 
-        // Initialize filters
-        this.initFilters();
+        // Dynamics (Limiter/Compressor)
+        this.dynamics = new JuraganAudioDynamics(sampleRate);
 
-        // Initialize FFT window (Hann)
-        this.window = new Float32Array(this.fftSize);
-        for (let i = 0; i < this.fftSize; i++) {
-            this.window[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (this.fftSize - 1)));
-        }
+        // SBR
+        this.sbr = new JuraganAudioSBR();
 
-        // Precompute bit reversal table
-        this.bitRev = new Uint32Array(this.fftSize);
-        let rev = 0;
-        for (let i = 0; i < this.fftSize; i++) {
-            this.bitRev[i] = rev;
-            let mask = this.fftSize >> 1;
-            while (rev & mask) {
-                rev &= ~mask;
-                mask >>= 1;
-            }
-            rev |= mask;
-        }
+        // FFT
+        this.fftSize = 4096 * 2;
+        this.fft = new JuraganAudioFFT(this.fftSize);
 
-        // Precompute twiddle factors
-        this.sinTable = new Float32Array(this.fftSize / 2);
-        this.cosTable = new Float32Array(this.fftSize / 2);
-        for (let i = 0; i < this.fftSize / 2; i++) {
-            this.sinTable[i] = Math.sin(-2 * Math.PI * i / this.fftSize);
-            this.cosTable[i] = Math.cos(-2 * Math.PI * i / this.fftSize);
-        }
+        // Wasm State
+        this.wasmDSP_L = null;
+        this.wasmDSP_R = null;
+        this.wasmLoaded = false;
+        this.wasmMemory = null;
 
         this.port.onmessage = (event) => this.handleMessage(event.data);
 
@@ -80,8 +51,8 @@ class JuraganAudioProcessor extends AudioWorkletProcessor {
             const instance = await init({ module_or_path: this.wasmModule });
             this.wasmMemory = instance.memory;
 
-            this.wasmDSP_L = new JuraganAudioDSP(this.sampleRate);
-            this.wasmDSP_R = new JuraganAudioDSP(this.sampleRate);
+            this.wasmDSP_L = new JuraganAudioDSP(sampleRate);
+            this.wasmDSP_R = new JuraganAudioDSP(sampleRate);
 
             this.wasmLoaded = true;
 
@@ -95,7 +66,8 @@ class JuraganAudioProcessor extends AudioWorkletProcessor {
     syncWasmState() {
         if (!this.wasmLoaded) return;
 
-        this.filters.forEach((f, i) => {
+        const filterList = this.filters.filters;
+        filterList.forEach((f, i) => {
             let typeId = 1;
             if (f.type === 'lowshelf') typeId = 0;
             if (f.type === 'highshelf') typeId = 2;
@@ -104,223 +76,53 @@ class JuraganAudioProcessor extends AudioWorkletProcessor {
             this.wasmDSP_R.set_filter(i, typeId, f.frequency, f.q, f.gain);
         });
 
-        this.wasmDSP_L.set_sbr_active(this.sbrActive);
-        this.wasmDSP_R.set_sbr_active(this.sbrActive);
+        // Disable internal WASM SBR and Limiter to control them in JS
+        this.wasmDSP_L.set_sbr_active(false);
+        this.wasmDSP_R.set_sbr_active(false);
+
+        // Set WASM limiter threshold high to bypass (we do it in JS)
+        this.wasmDSP_L.set_limiter(100.0, 0.5);
+        this.wasmDSP_R.set_limiter(100.0, 0.5);
 
         this.wasmDSP_L.set_gain(this.outputGain);
         this.wasmDSP_R.set_gain(this.outputGain);
-
-        let threshold = 0.89;
-        if (this.qualityMode === 'quality') threshold = 0.94;
-        if (this.qualityMode === 'hifi') threshold = 0.96;
-        this.wasmDSP_L.set_limiter(threshold, 0.5);
-        this.wasmDSP_R.set_limiter(threshold, 0.5);
-    }
-
-    processWasm(input, output, blockSize) {
-        if (input[0] && output[0]) {
-            this.wasmDSP_L.process_block(input[0], output[0]);
-        }
-
-        if (input[1] && output[1]) {
-            this.wasmDSP_R.process_block(input[1], output[1]);
-        }
-
-        // FFT Analysis & SBR Detection (JS Side)
-        if (output[0]) {
-            // Accumulate samples for FFT (Sliding Window)
-            const left = output[0];
-            const right = output[1] || output[0];
-
-            // Create temp array
-            const blockData = new Float32Array(blockSize);
-            for (let i = 0; i < blockSize; i++) {
-                blockData[i] = (left[i] + right[i]) * 0.5;
-            }
-
-            // Shift buffer left and append new data
-            this.fftBuffer.copyWithin(0, blockSize);
-            this.fftBuffer.set(blockData, this.fftSize - blockSize);
-
-            this.fftCounter++;
-            if (this.fftCounter >= Math.floor(this.sampleRate / blockSize / 30)) {
-                this.fftCounter = 0;
-
-                // Use JS FFT
-                const fftData = this.performFFT(this.fftBuffer);
-
-                this.detectSBR(fftData);
-
-                let reductionDb = 0;
-                if (this.wasmLoaded) {
-                    const l = this.wasmDSP_L.get_reduction_db();
-                    const r = this.wasmDSP_R.get_reduction_db();
-                    reductionDb = Math.min(l, r);
-
-                    this.wasmDSP_L.set_sbr_active(this.sbrActive);
-                    this.wasmDSP_R.set_sbr_active(this.sbrActive);
-                }
-
-                this.port.postMessage({
-                    type: 'fftData',
-                    // data: fftData, // Disable worklet visualizer to fix flickering
-                    limiterReduction: reductionDb,
-                    sbrActive: this.sbrActive
-                });
-            }
-        }
-        return true;
-    }
-
-    initFilters() {
-        this.filters = this.centerFrequencies.map((freq, index) => ({
-            type: index === 0 ? 'lowshelf' : (index === this.numFilters - 1 ? 'highshelf' : 'peaking'),
-            frequency: freq,
-            gain: 0,
-            q: this.getQForFrequency(freq),
-            b0: 1, b1: 0, b2: 0, a1: 0, a2: 0,
-            x1L: 0, x2L: 0, y1L: 0, y2L: 0,
-            x1R: 0, x2R: 0, y1R: 0, y2R: 0
-        }));
-        this.updateAllFilterCoefficients();
-    }
-
-    getQForFrequency(freq) {
-        let q = 1.0;
-        if (freq < 100) q = 0.7;
-        else if (freq < 500) q = 0.9;
-        else if (freq < 2000) q = 1.1;
-        else if (freq < 8000) q = 1.3;
-        else q = 1.5;
-
-        if (this.qualityMode === 'efficient') return q * 0.8;
-        else if (this.qualityMode === 'quality') return q * 1.0;
-        else return q * 1.2;
-    }
-
-    updateAllFilterCoefficients() {
-        this.filters.forEach(filter => this.calculateBiquadCoefficients(filter));
-    }
-
-    calculateBiquadCoefficients(filter) {
-        const { type, frequency, gain, q } = filter;
-        const w0 = 2 * Math.PI * frequency / this.sampleRate;
-        const cosW0 = Math.cos(w0);
-        const sinW0 = Math.sin(w0);
-        const alpha = sinW0 / (2 * q);
-        const A = Math.pow(10, gain / 40);
-        let b0, b1, b2, a0, a1, a2;
-
-        if (type === 'lowshelf') {
-            b0 = A * ((A + 1) - (A - 1) * cosW0 + 2 * Math.sqrt(A) * alpha);
-            b1 = 2 * A * ((A - 1) - (A + 1) * cosW0);
-            b2 = A * ((A + 1) - (A - 1) * cosW0 - 2 * Math.sqrt(A) * alpha);
-            a0 = (A + 1) + (A - 1) * cosW0 + 2 * Math.sqrt(A) * alpha;
-            a1 = -2 * ((A - 1) + (A + 1) * cosW0);
-            a2 = (A + 1) + (A - 1) * cosW0 - 2 * Math.sqrt(A) * alpha;
-        } else if (type === 'highshelf') {
-            b0 = A * ((A + 1) + (A - 1) * cosW0 + 2 * Math.sqrt(A) * alpha);
-            b1 = -2 * A * ((A - 1) + (A + 1) * cosW0);
-            b2 = A * ((A + 1) + (A - 1) * cosW0 - 2 * Math.sqrt(A) * alpha);
-            a0 = (A + 1) - (A - 1) * cosW0 + 2 * Math.sqrt(A) * alpha;
-            a1 = 2 * ((A - 1) - (A + 1) * cosW0);
-            a2 = (A + 1) - (A - 1) * cosW0 - 2 * Math.sqrt(A) * alpha;
-        } else {
-            b0 = 1 + alpha * A; b1 = -2 * cosW0; b2 = 1 - alpha * A;
-            a0 = 1 + alpha / A; a1 = -2 * cosW0; a2 = 1 - alpha / A;
-        }
-        filter.b0 = b0 / a0; filter.b1 = b1 / a0; filter.b2 = b2 / a0;
-        filter.a1 = a1 / a0; filter.a2 = a2 / a0;
-    }
-
-    highpass(input, state, alpha) {
-        const output = alpha * (state.y1 + input - state.x1);
-        state.x1 = input; state.y1 = output;
-        return output;
-    }
-
-    processSBR(sample, channelId) {
-        let state = (channelId === 'L') ? this.sbrHp1 : this.sbrHp2;
-        let hp1 = this.highpass(sample, state, 0.8);
-        // Boosted SBR gain by +6dB (0.1 -> 0.2)
-        return sample + (Math.abs(hp1) * this.sbrGain * 0.2);
-    }
-
-    detectSBR(magnitudes) {
-        if (typeof this.sbrHoldTimer === 'undefined') this.sbrHoldTimer = 0;
-
-        let midEnergy = 0, highEnergy = 0;
-        // Check array bounds before accessing
-        if (magnitudes.length < 2700) return;
-
-        // Mid Band: 2kHz - 5kHz (Bin ~340 to ~850)
-        for (let i = 340; i < 850; i++) midEnergy += magnitudes[i];
-
-        // High Band: 6kHz - 16kHz (Bin ~1024 to ~2700)
-        for (let i = 1024; i < 2700; i++) highEnergy += magnitudes[i];
-
-        midEnergy /= (850 - 340);
-        highEnergy /= (2700 - 1024);
-
-        // Relaxes threshold to 0.6 so it activates more easily for "punchy" feel
-        const conditionMet = (midEnergy > 0.05 && (highEnergy / midEnergy) < 0.6);
-
-        if (conditionMet) {
-            this.sbrHoldTimer = 3.0; // Hold for 3 seconds (slightly less sticky)
-            this.sbrActive = true;
-        } else {
-            if (this.sbrHoldTimer > 0) {
-                this.sbrHoldTimer -= 0.035; // Approx 35ms per frame
-                this.sbrActive = true;
-            } else {
-                this.sbrActive = false;
-            }
-        }
-
-        if (this.sbrActive) {
-            this.sbrGain += 0.1; // Faster attack (approx 0.4s to full)
-            if (this.sbrGain > 1.0) this.sbrGain = 1.0;
-        } else {
-            this.sbrGain -= 0.02; // Faster release
-            if (this.sbrGain < 0.0) this.sbrGain = 0.0;
-        }
-    }
-
-    processBiquad(filter, input, channel) {
-        const isLeft = channel === 'L';
-        const x1 = isLeft ? filter.x1L : filter.x1R;
-        const x2 = isLeft ? filter.x2L : filter.x2R;
-        const y1 = isLeft ? filter.y1L : filter.y1R;
-        const y2 = isLeft ? filter.y2L : filter.y2R;
-
-        const output = filter.b0 * input + filter.b1 * x1 + filter.b2 * x2 - filter.a1 * y1 - filter.a2 * y2;
-
-        if (isLeft) { filter.x2L = filter.x1L; filter.x1L = input; filter.y2L = filter.y1L; filter.y1L = output; }
-        else { filter.x2R = filter.x1R; filter.x1R = input; filter.y2R = filter.y1R; filter.y1R = output; }
-        return output;
-    }
-
-    softLimit(input, threshold) {
-        const absInput = Math.abs(input);
-        if (absInput < threshold) return input;
-        const excess = absInput - threshold;
-        const limited = threshold + excess / (1 + excess);
-        const ratio = limited / absInput;
-        if (ratio < this.minReduction) this.minReduction = ratio;
-        return input > 0 ? limited : -limited;
     }
 
     handleMessage(data) {
         switch (data.type) {
+            case 'initialState':
+                if (data.sbrOptions) {
+                    this.sbr.setOptions(data.sbrOptions.enabled, data.sbrOptions.gain);
+                }
+                if (data.limiterOptions) {
+                    this.dynamics.setLimiterOptions(data.limiterOptions.enabled, data.limiterOptions.attack);
+                }
+                if (data.visualizerFps) {
+                    this.visualizerFps = data.visualizerFps;
+                    this.framesPerRender = sampleRate / this.visualizerFps;
+                }
+                if (data.gain) {
+                    this.outputGain = data.gain;
+                    if (this.wasmLoaded) {
+                        this.wasmDSP_L.set_gain(data.gain);
+                        this.wasmDSP_R.set_gain(data.gain);
+                    }
+                }
+                if (data.filters) {
+                    // Full state sync not fully utilized in this msg format usually, handled individually
+                }
+            // Flow through
             case 'modifyFilter':
                 if (data.index >= 0 && data.index < this.numFilters) {
-                    this.filters[data.index].frequency = data.frequency;
-                    this.filters[data.index].gain = data.gain;
-                    this.filters[data.index].q = data.q;
-                    this.calculateBiquadCoefficients(this.filters[data.index]);
+                    const filters = this.filters.filters;
+
+                    filters[data.index].frequency = data.frequency;
+                    filters[data.index].gain = data.gain;
+                    filters[data.index].q = data.q;
+                    this.filters.calculateBiquadCoefficients(filters[data.index]);
 
                     if (this.wasmLoaded) {
-                        let f = this.filters[data.index];
+                        let f = filters[data.index];
                         let typeId = 1;
                         if (f.type === 'lowshelf') typeId = 0;
                         if (f.type === 'highshelf') typeId = 2;
@@ -338,9 +140,10 @@ class JuraganAudioProcessor extends AudioWorkletProcessor {
                 }
                 break;
             case 'resetFilters':
-                this.filters.forEach((filter, i) => {
+                const filters = this.filters.filters;
+                filters.forEach((filter, i) => {
                     filter.gain = 0;
-                    this.calculateBiquadCoefficients(filter);
+                    this.filters.calculateBiquadCoefficients(filter);
                     if (this.wasmLoaded) {
                         this.wasmDSP_L.set_filter(i, 1, filter.frequency, filter.q, 0.0);
                         this.wasmDSP_R.set_filter(i, 1, filter.frequency, filter.q, 0.0);
@@ -349,65 +152,89 @@ class JuraganAudioProcessor extends AudioWorkletProcessor {
                 this.outputGain = 1.0;
                 break;
             case 'setQualityMode':
-                this.qualityMode = data.mode;
+                this.filters.setQualityMode(data.mode);
 
-                // Update Limiter
-                let threshold = 0.89;
-                if (this.qualityMode === 'quality') threshold = 0.94;
-                if (this.qualityMode === 'hifi') threshold = 0.96;
-
+                // Update WASM filters with new Q
                 if (this.wasmLoaded) {
-                    this.wasmDSP_L.set_limiter(threshold, 0.5);
-                    this.wasmDSP_R.set_limiter(threshold, 0.5);
-                }
-
-                this.filters.forEach((filter, i) => {
-                    filter.q = this.getQForFrequency(filter.frequency);
-                    this.calculateBiquadCoefficients(filter);
-                    if (this.wasmLoaded) {
+                    const fl = this.filters.filters;
+                    fl.forEach((filter, i) => {
                         let typeId = 1;
                         if (filter.type === 'lowshelf') typeId = 0;
                         if (filter.type === 'highshelf') typeId = 2;
                         this.wasmDSP_L.set_filter(i, typeId, filter.frequency, filter.q, filter.gain);
                         this.wasmDSP_R.set_filter(i, typeId, filter.frequency, filter.q, filter.gain);
-                    }
-                });
+                    });
+                }
+                break;
+            case 'setSbrOptions':
+                this.sbr.setOptions(data.options.enabled, data.options.gain);
+                break;
+            case 'setLimiterOptions':
+                this.dynamics.setLimiterOptions(data.options.enabled, data.options.attack);
+                break;
+            case 'setVisualizerFps':
+                this.visualizerFps = data.fps;
+                this.framesPerRender = sampleRate / data.fps;
                 break;
         }
     }
 
-    performFFT(input) {
-        const n = this.fftSize;
-        const real = new Float32Array(n);
-        const imag = new Float32Array(n);
-
-        for (let i = 0; i < n; i++) {
-            const val = input[i] * this.window[i];
-            const rev = this.bitRev[i];
-            real[rev] = val; imag[rev] = 0;
+    processWasm(input, output, blockSize) {
+        // 1. EQ (WASM)
+        if (input[0] && output[0]) {
+            this.wasmDSP_L.process_block(input[0], output[0]);
+        }
+        if (input[1] && output[1]) {
+            this.wasmDSP_R.process_block(input[1], output[1]);
         }
 
-        for (let size = 2; size <= n; size *= 2) {
-            const halfSize = size / 2;
-            const tabStep = n / size;
-            for (let i = 0; i < n; i += size) {
-                for (let j = 0; j < halfSize; j++) {
-                    const k = j * tabStep;
-                    const tReal = real[i + j + halfSize] * this.cosTable[k] - imag[i + j + halfSize] * this.sinTable[k];
-                    const tImag = real[i + j + halfSize] * this.sinTable[k] + imag[i + j + halfSize] * this.cosTable[k];
-                    real[i + j + halfSize] = real[i + j] - tReal; imag[i + j + halfSize] = imag[i + j] - tImag;
-                    real[i + j] += tReal; imag[i + j] += tImag;
+        // 2 & 3 & 4. JS Processing chain (SBR -> Compressor -> Limiter)
+        const left = output[0];
+        const right = output[1] || output[0];
+
+        // SBR
+        this.sbr.processBlock(left, right, blockSize);
+
+        // Dynamics (Compressor + Limiter)
+        this.dynamics.processBlock(left, right, blockSize);
+
+        // FFT Analysis & SBR Detection (JS Side)
+        if (output[0]) {
+            const buffer = this.fft.getBuffer();
+
+            // Visualize Buffer - Sliding Window
+            buffer.copyWithin(0, blockSize);
+
+            // Fill new data (Mix L+R)
+            for (let i = 0; i < blockSize; i++) {
+                buffer[this.fftSize - blockSize + i] = (left[i] + (output[1] ? right[i] : left[i])) * 0.5;
+            }
+
+            this.samplesSinceLastFft += blockSize;
+
+            // Throttled by FPS
+            if (this.samplesSinceLastFft >= this.framesPerRender) {
+                this.samplesSinceLastFft = 0;
+
+                const fftData = this.fft.performFFT(buffer);
+                this.sbr.detectSBR(fftData);
+
+                let reductionDb = 0;
+                let minRed = this.dynamics.getMinReduction();
+                if (minRed < 1.0) {
+                    reductionDb = 20 * Math.log10(minRed);
+                    this.dynamics.resetMinReduction();
                 }
+
+                this.port.postMessage({
+                    type: 'fftData',
+                    data: fftData,
+                    limiterReduction: reductionDb,
+                    sbrActive: this.sbr.sbrActive
+                });
             }
         }
-
-        const magnitudes = new Float32Array(n / 2);
-        for (let i = 0; i < n / 2; i++) {
-            magnitudes[i] = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
-            let db = 20 * Math.log10(magnitudes[i] + 1e-6);
-            magnitudes[i] = Math.max(0, (db + 100) / 100);
-        }
-        return magnitudes;
+        return true;
     }
 
     process(inputs, outputs, parameters) {
@@ -422,34 +249,34 @@ class JuraganAudioProcessor extends AudioWorkletProcessor {
         }
 
         const numChannels = Math.min(input.length, output.length);
-        const threshold = this.qualityMode === 'efficient' ? 0.89 : this.qualityMode === 'quality' ? 0.94 : 0.96;
 
         // If Wasm not loaded, BYPASS DSP but keep Visualization
         for (let ch = 0; ch < numChannels; ch++) {
             output[ch].set(input[ch]);
         }
 
+        // Visualization
+        const left = output[0];
+        const right = output[1] || output[0];
+        const buffer = this.fft.getBuffer();
+
+        // Sliding window or linear fill? Consistent with processWasm
+        buffer.copyWithin(0, blockSize);
         for (let i = 0; i < blockSize; i++) {
-            let sample = numChannels === 2 ? (output[0][i] + output[1][i]) * 0.5 : output[0][i];
-            this.fftBuffer[this.fftPosition++] = sample;
-            if (this.fftPosition >= this.fftSize) this.fftPosition = 0;
+            buffer[this.fftSize - blockSize + i] = (left[i] + (output[1] ? right[i] : left[i])) * 0.5;
         }
 
-        this.fftCounter++;
-        if (this.fftCounter >= Math.floor(this.sampleRate / 128 / 30)) {
-            this.fftCounter = 0;
-            const fftData = this.performFFT(this.fftBuffer);
-            this.detectSBR(fftData);
-
-            let reductionDb = 0;
-            if (this.minReduction < 1.0) reductionDb = 20 * Math.log10(Math.max(1e-6, this.minReduction));
-            this.minReduction = 1.0;
+        this.samplesSinceLastFft += blockSize;
+        if (this.samplesSinceLastFft >= this.framesPerRender) {
+            this.samplesSinceLastFft = 0;
+            const fftData = this.fft.performFFT(buffer);
+            this.sbr.detectSBR(fftData); // Detect even if SBR not applied
 
             this.port.postMessage({
                 type: 'fftData',
-                // data: fftData, // Disable worklet visualizer to fix flickering
-                limiterReduction: reductionDb,
-                sbrActive: this.sbrActive
+                data: fftData,
+                limiterReduction: 0,
+                sbrActive: this.sbr.sbrActive
             });
         }
         return true;

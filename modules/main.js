@@ -152,6 +152,9 @@ function updateWorkspace(data) { // J
 
     // Also update tabs list
     updateTabsList(data.streams || []);
+
+    // Update Settings UI
+    updateSettingsUI(data);
 }
 
 function updateTabsList(streams) {
@@ -176,7 +179,7 @@ function updateTabsList(streams) {
 
         const img = document.createElement("img");
         img.className = "tab-favicon";
-        img.src = stream.favIconUrl || 'juraganaudio16.png';
+        img.src = stream.favIconUrl || 'assets/juraganaudio16.png';
         img.alt = "";
 
         const title = document.createElement("span");
@@ -332,6 +335,8 @@ function initUI() {
         const fsLink = document.getElementById("fullscreen-link");
         if (fsLink) fsLink.style.display = "none";
     }
+
+    initSettingsUI();
 }
 
 function updateQualityModeUI(mode) {
@@ -430,5 +435,105 @@ function uiSetStopEq() { // G
     btn.classList.add("active");
     btn.title = "Disable EQ for this tab";
 }
+
+// --- Settings Modal Logic ---
+
+function initSettingsUI() {
+    const modal = document.getElementById("settingsModal");
+    const toggleBtn = document.getElementById("settingsToggle");
+    const okBtn = document.getElementById("settingsOkBtn");
+    const defaultBtn = document.getElementById("settingsDefaultBtn");
+
+    // Inputs
+    const sbrToggle = document.getElementById("sbrToggle");
+    const sbrGain = document.getElementById("sbrGain");
+    const sbrGainValue = document.getElementById("sbrGainValue");
+    const limiterToggle = document.getElementById("limiterToggle");
+    const limiterAttack = document.getElementById("limiterAttack");
+    const limiterAttackValue = document.getElementById("limiterAttackValue");
+    const vizFps = document.getElementById("visualizerFps");
+    const vizFpsValue = document.getElementById("visualizerFpsValue");
+
+    // Open Modal
+    toggleBtn.onclick = () => modal.classList.add("show");
+
+    // Close on click outside (Cancel)
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.classList.remove("show");
+            // Revert changes by requesting full refresh? 
+            // Or just do nothing, next open will refresh from state.
+            // But if user modified inputs, they remain modified in DOM? 
+            // Yes, so we should arguably reset them to current actual state.
+            chrome.runtime.sendMessage({ type: "getFullRefresh" });
+        }
+    };
+
+    // Live UI updates (visual only)
+    sbrGain.oninput = () => sbrGainValue.textContent = sbrGain.value + "db";
+    limiterAttack.oninput = () => limiterAttackValue.textContent = limiterAttack.value + "ms";
+    vizFps.oninput = () => vizFpsValue.textContent = vizFps.value + " fps";
+
+    // OK Button - Save and Close
+    okBtn.onclick = () => {
+        // Send all updates
+        chrome.runtime.sendMessage({
+            type: "setSbrOptions",
+            options: {
+                enabled: sbrToggle.checked,
+                gain: parseFloat(sbrGain.value)
+            }
+        });
+
+        chrome.runtime.sendMessage({
+            type: "setLimiterOptions",
+            options: {
+                enabled: limiterToggle.checked,
+                attack: parseFloat(limiterAttack.value) / 1000 // Convert to seconds
+            }
+        });
+
+        chrome.runtime.sendMessage({
+            type: "setVisualizerFps",
+            fps: parseInt(vizFps.value)
+        });
+
+        modal.classList.remove("show");
+        showMessage("Settings saved.");
+    };
+
+    // Defaults
+    defaultBtn.onclick = () => {
+        sbrToggle.checked = false;
+        sbrGain.value = 1;
+        sbrGainValue.textContent = "1db";
+
+        limiterToggle.checked = true;
+        limiterAttack.value = 100;
+        limiterAttackValue.textContent = "100ms";
+
+        vizFps.value = 30;
+        vizFpsValue.textContent = "30 fps";
+    };
+}
+
+// Hook into existing updateWorkspace
+function updateSettingsUI(data) {
+    if (data.sbrOptions) {
+        document.getElementById("sbrToggle").checked = data.sbrOptions.enabled;
+        document.getElementById("sbrGain").value = data.sbrOptions.gain;
+        document.getElementById("sbrGainValue").textContent = data.sbrOptions.gain + "db";
+    }
+    if (data.limiterOptions) {
+        document.getElementById("limiterToggle").checked = data.limiterOptions.enabled;
+        document.getElementById("limiterAttack").value = data.limiterOptions.attack * 1000; // to ms
+        document.getElementById("limiterAttackValue").textContent = (data.limiterOptions.attack * 1000) + "ms";
+    }
+    if (data.visualizerFps) {
+        document.getElementById("visualizerFps").value = data.visualizerFps;
+        document.getElementById("visualizerFpsValue").textContent = data.visualizerFps + " fps";
+    }
+}
+
 
 

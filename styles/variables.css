@@ -1,0 +1,40 @@
+:root {
+    --bg-void: #090a0c;
+    --bg-glass: rgba(22, 24, 29, 0.7);
+    --bg-glass-border: rgba(255, 255, 255, 0.08);
+    --track-bg: rgba(255, 255, 255, 0.2);
+    --header-bg: rgba(9, 10, 12, 0.8);
+    --dashboard-bg: rgba(13, 14, 18, 0.98);
+    --color-primary: #818cf8;
+    --color-primary-glow: rgba(129, 140, 248, 0.4);
+    --color-accent: #22d3ee;
+    --color-accent-glow: rgba(34, 211, 238, 0.4);
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --dropdown-bg: #1e1b4b;
+    --gradient-stop: #1e1b4b;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --anim-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1)
+}
+
+body.light-mode {
+    --bg-void: #f3f4f6;
+    --bg-glass: rgba(255, 255, 255, 0.7);
+    --bg-glass-border: rgba(0, 0, 0, 0.1);
+    --track-bg: rgba(0, 0, 0, 0.15);
+    --header-bg: rgba(243, 244, 246, 0.8);
+    --dashboard-bg: #e5e7eb;
+    --color-primary: #4f46e5;
+    --color-primary-glow: rgba(79, 70, 229, 0.2);
+    --color-accent: #0891b2;
+    --color-accent-glow: rgba(8, 145, 178, 0.1);
+    --text-main: #1f2937;
+    --text-muted: #4b5563;
+    --input-bg: rgba(0, 0, 0, 0.08);
+    --dropdown-bg: #ffffff;
+    --gradient-stop: #d1d5db
+}

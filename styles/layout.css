@@ -1,0 +1,77 @@
+body>h1 {
+    position: relative;
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    background: var(--header-bg);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--bg-glass-border);
+    margin: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
+
+#mainDiv {
+    position: relative;
+    height: 340px;
+    flex-shrink: 0;
+    background: radial-gradient(circle at 50% -20%, var(--gradient-stop) 0%, var(--bg-void) 70%)
+}
+
+#warning,
+#contactInfo {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: none
+}
+
+#fullscreen-link {
+    opacity: 1;
+    color: var(--text-main)
+}
+
+#eqThisTabDiv {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 100
+}
+
+#eqThisTabDiv button {
+    padding: 12px 32px;
+    height: auto;
+    font-size: 15px;
+    border-radius: 99px
+}
+
+#requiresProDiv {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(15, 17, 21, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    padding: 12px 24px;
+    color: var(--text-main);
+    z-index: 500;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    font-size: 13px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 80%
+}
+
+#requiresProDiv.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto
+}

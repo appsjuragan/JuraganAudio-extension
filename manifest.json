@@ -10,15 +10,15 @@
       "type": "module"
    },
    "action": {
-      "default_icon": "juraganaudio128.png",
+      "default_icon": "assets/juraganaudio128.png",
       "default_popup": "popup.html"
    },
    "icons": {
-      "128": "juraganaudio128.png",
-      "16": "juraganaudio16.png",
-      "32": "juraganaudio32.png",
-      "48": "juraganaudio48.png",
-      "64": "juraganaudio64.png"
+      "128": "assets/juraganaudio128.png",
+      "16": "assets/juraganaudio16.png",
+      "32": "assets/juraganaudio32.png",
+      "48": "assets/juraganaudio48.png",
+      "64": "assets/juraganaudio64.png"
    },
    "permissions": [
       "activeTab",
@@ -33,7 +33,11 @@
             "worklet/audio-processor.js",
             "worklet/juragan_audio_dsp.js",
             "worklet/juragan_audio_dsp_bg.wasm",
-            "worklet/polyfill.js"
+            "worklet/polyfill.js",
+            "worklet/modules/filters.js",
+            "worklet/modules/fft.js",
+            "worklet/modules/dynamics.js",
+            "worklet/modules/sbr.js"
          ],
          "matches": [
             "<all_urls>"

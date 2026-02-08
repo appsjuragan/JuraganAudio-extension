@@ -1,0 +1,226 @@
+body>input[type="radio"] {
+    display: none
+}
+
+#tabNav {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    background: var(--input-bg);
+    border: 1px solid var(--bg-glass-border);
+    border-radius: 99px;
+    padding: 2px;
+    gap: 4px
+}
+
+#themeToggle {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+    color: var(--text-main)
+}
+
+#themeToggle:hover {
+    background: rgba(255, 255, 255, 0.2)
+}
+
+body.light-mode #themeToggle {
+    background: rgba(0, 0, 0, 0.05)
+}
+
+body.light-mode #themeToggle:hover {
+    background: rgba(0, 0, 0, 0.1)
+}
+
+#tabNav label {
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 99px;
+    background: transparent;
+    transition: all var(--anim-fast);
+    user-select: none;
+    text-align: center;
+    white-space: nowrap;
+    margin: 0;
+    transform: none;
+    left: auto;
+    width: auto;
+    border: none;
+    height: auto;
+}
+
+body>input#tab-1:checked~h1 #tabNav label[for="tab-1"],
+body>input#tab-2:checked~h1 #tabNav label[for="tab-2"],
+body>input#tab-3:checked~h1 #tabNav label[for="tab-3"] {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-main);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05)
+}
+
+body.light-mode>input#tab-1:checked~h1 #tabNav label[for="tab-1"],
+body.light-mode>input#tab-2:checked~h1 #tabNav label[for="tab-2"],
+body.light-mode>input#tab-3:checked~h1 #tabNav label[for="tab-3"] {
+    background: #fff;
+    color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+}
+
+#tabNav label:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05)
+}
+
+button,
+select,
+input {
+    border-radius: var(--radius-sm);
+    transition: all var(--anim-fast);
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--bg-glass-border);
+    outline: none;
+    padding: 0 10px;
+    font-family: var(--font-family);
+    font-size: 11px;
+    height: 30px;
+    appearance: none;
+}
+
+select option {
+    background: var(--dropdown-bg);
+    color: var(--text-main)
+}
+
+button:hover,
+select:hover,
+input:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2)
+}
+
+button:hover {
+    transform: translateY(-1px)
+}
+
+button:active {
+    transform: translateY(0)
+}
+
+/* Switch Toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .3s;
+    border-radius: 24px;
+    border: 1px solid var(--bg-glass-border);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-muted);
+    transition: .3s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: rgba(34, 211, 238, 0.15);
+    /* Accent color background */
+    border-color: var(--color-accent);
+}
+
+input:checked+.slider:before {
+    transform: translateX(26px);
+    background-color: var(--color-accent);
+}
+
+/* Text inside switch */
+.switch-text {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.switch-text.on {
+    left: 6px;
+    opacity: 0;
+    color: var(--color-accent);
+}
+
+.switch-text.off {
+    right: 6px;
+    opacity: 1;
+}
+
+input:checked~.switch-text.on {
+    opacity: 1;
+}
+
+#toast {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--color-primary);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1000;
+    white-space: nowrap;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5)
+}
+
+#toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0)
+}

@@ -1,74 +1,8 @@
 // Service Worker for JuraganAudio Toolkit (Manifest V3) with Quality Modes
 
-// State management
-let state = {
-    gain: 1,
-    filters: [],
-    presets: {},
-    activeStreams: [], // Tab IDs
-    qualityMode: 'efficient' // 'efficient', 'quality', 'hifi'
-};
-
-const PRESETS_PREFIX = "PRESETS.";
-const K = 11;
-const z = [20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480];
-// Updated Q values - frequency dependent for better sound
-const H_EFFICIENT = [0.5, 0.55, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.4, 1.6, 0.5];
-const H = H_EFFICIENT;
-
-// Initialize state from storage
-async function initState() {
-    const data = await chrome.storage.local.get(null);
-    state.gain = data.GAIN ? JSON.parse(data.GAIN) : 1;
-
-    state.filters = [];
-    for (let j = 0; j < K; j++) {
-        const key = "filter" + j;
-        if (data[key]) {
-            state.filters.push(JSON.parse(data[key]));
-        } else {
-            state.filters.push({ f: z[j], g: 0, q: H[j] });
-        }
-    }
-
-    // Load quality mode setting
-    state.qualityMode = data.QUALITY_MODE || 'efficient';
-
-    const syncData = await chrome.storage.sync.get(null);
-    state.presets = {};
-    for (let key in syncData) {
-        if (key.startsWith(PRESETS_PREFIX)) {
-            state.presets[key.slice(PRESETS_PREFIX.length)] = syncData[key];
-        }
-    }
-}
-
-// Create offscreen document for audio processing
-let creating; // A global promise to avoid concurrency issues
-async function ensureOffscreen() {
-    const path = 'offscreen.html';
-    if (await chrome.offscreen.hasDocument()) return;
-
-    if (creating) {
-        await creating;
-    } else {
-        creating = chrome.offscreen.createDocument({
-            url: path,
-            reasons: ['AUDIO_PLAYBACK'],
-            justification: 'Audio equalization requires AudioContext and tabCapture',
-        });
-        await creating;
-        creating = null;
-
-        // Sync state immediately after creation
-        chrome.runtime.sendMessage({
-            type: "initialState",
-            gain: state.gain,
-            filters: state.filters,
-            qualityMode: state.qualityMode
-        });
-    }
-}
+import { state, initState, K, z, H, PRESETS_PREFIX } from './modules/service_worker/state.js';
+import { ensureOffscreen } from './modules/service_worker/offscreen.js';
+import { sendFullStatus, handleSavePreset, handleDeletePreset, handleImportPresets } from './modules/service_worker/messaging.js';
 
 // Message Listener
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -105,7 +39,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         'resetFilters',
         'resetFilter',
         'preset',
-        'setQualityMode'
+        'setQualityMode',
+        'setSbrOptions',
+        'setLimiterOptions',
+        'setVisualizerFps'
     ];
 
     if (offscreenMessages.includes(msg.type)) {
@@ -125,6 +62,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         } else if (msg.type === 'setQualityMode') {
             state.qualityMode = msg.mode;
             chrome.storage.local.set({ "QUALITY_MODE": msg.mode });
+        } else if (msg.type === 'setSbrOptions') {
+            state.sbrOptions = msg.options;
+            chrome.storage.local.set({ "SBR_OPTIONS": JSON.stringify(state.sbrOptions) });
+        } else if (msg.type === 'setLimiterOptions') {
+            state.limiterOptions = msg.options;
+            chrome.storage.local.set({ "LIMITER_OPTIONS": JSON.stringify(state.limiterOptions) });
+        } else if (msg.type === 'setVisualizerFps') {
+            state.visualizerFps = msg.fps;
+            chrome.storage.local.set({ "VISUALIZER_FPS": msg.fps });
         } else if (msg.type === 'preset') {
             // Handle preset application
             if (msg.preset === 'bassBoost') {
@@ -157,7 +103,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
 
         // Send updated status to popup for immediate UI refresh
-        if (msg.type === 'resetFilters' || msg.type === 'setQualityMode' || msg.type === 'preset') {
+        if (['resetFilters', 'setQualityMode', 'preset', 'setSbrOptions', 'setLimiterOptions', 'setVisualizerFps'].includes(msg.type)) {
             sendFullStatus();
         }
         return;
@@ -182,69 +128,5 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
     }
 });
-
-async function sendFullStatus() {
-    const tabs = await chrome.tabs.query({});
-    const activeStreamTabs = tabs.filter(t => state.activeStreams.includes(t.id));
-
-    // Send to popup
-    const filters = state.filters.map((f, i) => ({
-        frequency: f.f,
-        gain: f.g,
-        type: (i === 0) ? "lowshelf" : (i === K - 1) ? "highshelf" : "peaking",
-        q: f.q
-    }));
-    chrome.runtime.sendMessage({
-        type: "sendWorkspaceStatus",
-        eqFilters: filters,
-        streams: activeStreamTabs,
-        gain: state.gain,
-        qualityMode: state.qualityMode
-    });
-
-    // Also current tab status
-    const activeTabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (activeTabs.length) {
-        chrome.runtime.sendMessage({
-            type: "sendCurrentTabStatus",
-            streaming: state.activeStreams.includes(activeTabs[0].id)
-        });
-    }
-
-    // Presets
-    chrome.runtime.sendMessage({ type: "sendPresets", presets: state.presets });
-}
-
-async function handleSavePreset(msg) {
-    const presetData = {
-        frequencies: state.filters.map(f => f.f),
-        gains: state.filters.map(f => f.g),
-        qs: state.filters.map(f => f.q),
-        gain: state.gain // Save master gain
-    };
-
-    const saveObj = {};
-    saveObj[PRESETS_PREFIX + msg.preset] = presetData;
-    await chrome.storage.sync.set(saveObj);
-    state.presets[msg.preset] = presetData;
-    sendFullStatus();
-}
-
-async function handleDeletePreset(msg) {
-    await chrome.storage.sync.remove(PRESETS_PREFIX + msg.preset);
-    delete state.presets[msg.preset];
-    sendFullStatus();
-}
-
-async function handleImportPresets(msg) {
-    const presets = msg.presets;
-    const saveObj = {};
-    for (let key in presets) {
-        saveObj[PRESETS_PREFIX + key] = presets[key];
-        state.presets[key] = presets[key];
-    }
-    await chrome.storage.sync.set(saveObj);
-    sendFullStatus();
-}
 
 initState();
