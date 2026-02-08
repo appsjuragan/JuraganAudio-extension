@@ -46,7 +46,7 @@
 .modal-header {
     padding: 12px 20px;
     border-bottom: 1px solid var(--bg-glass-border);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--input-bg);
 }
 
 .modal-header h2 {
@@ -87,7 +87,7 @@
 .modal-footer {
     padding: 12px 20px;
     border-top: 1px solid var(--bg-glass-border);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--input-bg);
     display: flex;
     justify-content: flex-end;
     gap: 10px;
@@ -105,7 +105,7 @@
 }
 
 .modal-btn.secondary {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--input-bg);
     color: var(--text-muted);
     border-color: var(--bg-glass-border);
 }
@@ -212,7 +212,7 @@ input[type=range]::-webkit-slider-thumb {
 
 .select-container select {
     width: 100%;
-    background: rgba(255, 255, 255, 0.05);
+    background-color: var(--input-bg);
     border: 1px solid var(--bg-glass-border);
     color: var(--text-main);
     padding: 6px 8px;

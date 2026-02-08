@@ -63,8 +63,16 @@ body.light-mode #themeToggle:hover {
 
 #settingsToggle:hover {
     background: rgba(255, 255, 255, 0.15);
-    color: var(--text-main);
     transform: rotate(90deg);
+}
+
+#settingsToggle img {
+    filter: brightness(0) invert(1);
+    transition: filter 0.3s;
+}
+
+body.light-mode #settingsToggle img {
+    filter: brightness(0);
 }
 
 #tabNav label {
@@ -151,6 +159,13 @@ input:hover {
     border-color: rgba(255, 255, 255, 0.2);
 }
 
+body.light-mode button:hover,
+body.light-mode select:hover,
+body.light-mode input:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
 button:hover {
     transform: translateY(-1px)
 }
@@ -180,7 +195,7 @@ button:active {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--input-bg);
     transition: .3s;
     border-radius: 24px;
     border: 1px solid var(--bg-glass-border);
