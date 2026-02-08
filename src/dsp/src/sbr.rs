@@ -65,6 +65,7 @@ impl Xorshift32 {
 struct SbrChannelState {
     hp: HighPassFilter,
     lpf: LowPassFilter,
+    synth_hp: HighPassFilter,
     env_fast: f32,
     env_slow: f32,
     tail: f32,
@@ -73,10 +74,11 @@ struct SbrChannelState {
 }
 
 impl SbrChannelState {
-    fn new(alpha_hpf: f32, alpha_lpf: f32) -> Self {
+    fn new(alpha_hpf: f32, alpha_lpf: f32, alpha_synth_hpf: f32) -> Self {
         Self {
             hp: HighPassFilter::new(alpha_hpf),
             lpf: LowPassFilter::new(alpha_lpf),
+            synth_hp: HighPassFilter::new(alpha_synth_hpf),
             env_fast: 0.0,
             env_slow: 0.0,
             tail: 0.0,
@@ -100,7 +102,8 @@ pub struct SBRProcessor {
     params_gain: f32,
     params_enabled: bool,
     
-    rng: Xorshift32,
+    rng_left: Xorshift32,
+    rng_right: Xorshift32,
 }
 
 #[wasm_bindgen]
@@ -109,13 +112,15 @@ impl SBRProcessor {
     pub fn new(sample_rate: f32) -> Self {
         let alpha_hpf = 0.6; // Highpass for detection
         
-        // Lowpass cutoff at 20000Hz to ensure SBR content reaches at least 18khz clearly
-        let fc = 20000.0;
+        // Lowpass cutoff at 18000Hz to avoid noisy ultra-high content.
+        let fc = 18000.0;
         let alpha_lpf = 1.0 - (-2.0 * PI * fc / sample_rate).exp();
+        let synth_hp_fc = 6000.0;
+        let alpha_synth_hpf = (-2.0 * PI * synth_hp_fc / sample_rate).exp();
         
         Self {
-            left: SbrChannelState::new(alpha_hpf, alpha_lpf),
-            right: SbrChannelState::new(alpha_hpf, alpha_lpf),
+            left: SbrChannelState::new(alpha_hpf, alpha_lpf, alpha_synth_hpf),
+            right: SbrChannelState::new(alpha_hpf, alpha_lpf, alpha_synth_hpf),
             
             alpha_hpf,
             alpha_fast: 0.85,
@@ -125,7 +130,8 @@ impl SBRProcessor {
             params_gain: 1.0,
             params_enabled: false,
             
-            rng: Xorshift32::new(12345),
+            rng_left: Xorshift32::new(12345),
+            rng_right: Xorshift32::new(54321),
         }
     }
     
@@ -176,13 +182,16 @@ impl SBRProcessor {
             let syn_gain_l = (self.left.tail * 15.0).min(1.0);
             
             // Noise
-            let n_l = self.rng.next_f32();
+            let n_l = self.rng_left.next_f32();
             self.left.noise_hp = 0.3 * (self.left.noise_hp + n_l - self.left.noise_x1);
             self.left.noise_x1 = n_l;
             
             // Generated Signal (Harmonics + Noise)
             let mut generated_l = (harm_l * syn_gain_l * makeup) + (self.left.noise_hp * syn_gain_l * makeup * 0.15);
             
+            // Highpass to focus on missing band
+            generated_l = self.left.synth_hp.process(generated_l);
+
             // LPF
             generated_l = self.left.lpf.process(generated_l);
             
@@ -216,13 +225,16 @@ impl SBRProcessor {
             let syn_gain_r = (self.right.tail * 15.0).min(1.0);
             
             // Noise
-            let n_r = self.rng.next_f32();
+            let n_r = self.rng_right.next_f32();
             self.right.noise_hp = 0.3 * (self.right.noise_hp + n_r - self.right.noise_x1);
             self.right.noise_x1 = n_r;
             
             // Generated Signal
             let mut generated_r = (harm_r * syn_gain_r * makeup) + (self.right.noise_hp * syn_gain_r * makeup * 0.15);
             
+            // Highpass to focus on missing band
+            generated_r = self.right.synth_hp.process(generated_r);
+
             // LPF
             generated_r = self.right.lpf.process(generated_r);
             
