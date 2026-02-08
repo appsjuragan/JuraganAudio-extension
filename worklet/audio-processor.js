@@ -189,7 +189,7 @@ class JuraganAudioProcessor extends AudioWorkletProcessor {
         }
 
         // FFT Analysis (Still in JS/WASM hybrid usage for Display)
-        if (output[0]) {
+        if (leftOut) {
             const buffer = this.fft.getBuffer();
 
             // Visualize Buffer - Sliding Window
@@ -197,9 +197,9 @@ class JuraganAudioProcessor extends AudioWorkletProcessor {
 
             // Fill new data (Mix L+R)
             for (let i = 0; i < blockSize; i++) {
-                // Use output (processed) signal for visualizer? Usually we use input or post-EQ.
-                // Using output lets user see effects.
-                buffer[this.fftSize - blockSize + i] = (leftOut[i] + rightOut[i]) * 0.5;
+                // Using output (processed) signal for visualizer to show effective changes
+                const rSample = rightOut ? rightOut[i] : leftOut[i];
+                buffer[this.fftSize - blockSize + i] = (leftOut[i] + rSample) * 0.5;
             }
 
             this.samplesSinceLastFft += blockSize;
@@ -210,47 +210,53 @@ class JuraganAudioProcessor extends AudioWorkletProcessor {
 
                 const fftData = this.fft.performFFT(buffer);
 
-                // Get reduction from WASM
+                // Get reduction and SBR status from WASM
                 let reductionDb = this.wasmDSP.get_reduction_db();
+                let sbrActive = this.wasmDSP.is_sbr_active();
 
                 this.port.postMessage({
                     type: 'fftData',
                     data: fftData,
                     limiterReduction: reductionDb,
-                    sbrActive: this.wasmDSP.is_sbr_active()
+                    sbrActive: sbrActive
                 });
             }
         }
         return true;
     }
 
-    process(inputs, outputs, parameters) {
-        const input = inputs[0]; const output = outputs[0];
-        if (!input || input.length === 0) return true;
-
-        const blockSize = input[0].length;
-
-        // Use Wasm if loaded
-        if (this.wasmLoaded) {
-            return this.processWasm(input, output, blockSize);
-        }
-
+    processJs(input, output, blockSize) {
         const numChannels = Math.min(input.length, output.length);
 
-        // If Wasm not loaded, BYPASS DSP but keep Visualization
+        // 1. EQ + Gain
         for (let ch = 0; ch < numChannels; ch++) {
-            output[ch].set(input[ch]);
+            const chanIn = input[ch];
+            const chanOut = output[ch];
+            for (let i = 0; i < blockSize; i++) {
+                let s = chanIn[i];
+                // Apply Filters
+                this.filters.filters.forEach(f => {
+                    s = this.filters.processBiquad(s, f, ch);
+                });
+                // Apply Gain
+                chanOut[i] = s * this.outputGain;
+            }
         }
 
-        // Visualization
         const left = output[0];
         const right = output[1] || output[0];
-        const buffer = this.fft.getBuffer();
 
-        // Sliding window or linear fill? Consistent with processWasm
+        // 2. SBR (JS Fallback)
+        this.sbr.processBlock(left, right, blockSize);
+
+        // 3. Dynamics (JS Fallback)
+        this.dynamics.processBlock(left, right, blockSize);
+
+        // Visualization
+        const buffer = this.fft.getBuffer();
         buffer.copyWithin(0, blockSize);
         for (let i = 0; i < blockSize; i++) {
-            buffer[this.fftSize - blockSize + i] = (left[i] + (output[1] ? right[i] : left[i])) * 0.5;
+            buffer[this.fftSize - blockSize + i] = (left[i] + right[i]) * 0.5;
         }
 
         this.samplesSinceLastFft += blockSize;
@@ -258,14 +264,45 @@ class JuraganAudioProcessor extends AudioWorkletProcessor {
             this.samplesSinceLastFft = 0;
             const fftData = this.fft.performFFT(buffer);
 
+            // Perform SBR detection in JS fallback
+            this.sbr.detectSBR(fftData, sampleRate);
+
+            let reductionDb = 0;
+            let minRed = this.dynamics.getMinReduction();
+            if (minRed < 1.0) {
+                reductionDb = 20 * Math.log10(minRed);
+                this.dynamics.resetMinReduction();
+            }
+
             this.port.postMessage({
                 type: 'fftData',
                 data: fftData,
-                limiterReduction: 0,
-                sbrActive: this.sbr.sbrEnabled
+                limiterReduction: reductionDb,
+                sbrActive: this.sbr.sbrActive
             });
         }
         return true;
+    }
+
+    process(inputs, outputs, parameters) {
+        const input = inputs[0];
+        const output = outputs[0];
+        if (!input || input.length === 0) return true;
+
+        const blockSize = input[0].length;
+
+        // Use Wasm if loaded
+        if (this.wasmLoaded) {
+            try {
+                return this.processWasm(input, output, blockSize);
+            } catch (e) {
+                console.error("WASM processing error, falling back to JS", e);
+                this.wasmLoaded = false;
+            }
+        }
+
+        // Fallback to JS Implementation
+        return this.processJs(input, output, blockSize);
     }
 }
 

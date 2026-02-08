@@ -1,50 +1,87 @@
 export class JuraganAudioSBR {
     constructor() {
         this.sbrEnabled = false;
+        this.sbrActive = false;
         this.sbrUserGain = 1.0;
-
-        // Envelope followers for transient detection
-        // Left
+        // ... (rest of constructor remains similar but we initialize sbrActive)
         this.envFastL = 0.0;
         this.envSlowL = 0.0;
-        this.tailL = 0.0; // Pulse stretching envelope
-        // Right
+        this.tailL = 0.0;
         this.envFastR = 0.0;
         this.envSlowR = 0.0;
         this.tailR = 0.0;
-
-        // Highpass filters state
         this.sbrHp1 = { x1: 0, y1: 0 };
         this.sbrHp2 = { x1: 0, y1: 0 };
-
-        // Noise synthesis state
         this.noiseHpL = 0; this.noiseX1L = 0;
         this.noiseHpR = 0; this.noiseX1R = 0;
-
-        // Constants
-        // Cutoff higher (~5kHz) to strictly isolate hats
         this.alphaHpf = 0.6;
-
-        // Transient sensitivities
         this.alphaFast = 0.85;
         this.alphaSlow = 0.992;
-
-        // Reconstruction Tail (The "Sizzle")
-        // Decay rate for the triggered harmonic pulse
-        this.tailDecay = 0.9994; // ~15-30ms sizzle
+        this.tailDecay = 0.9994;
     }
 
     setOptions(enabled, gain) {
         this.sbrEnabled = enabled;
+        if (!enabled) this.sbrActive = false;
         if (gain !== undefined) this.sbrUserGain = gain;
     }
 
-    detectSBR(magnitudes) {
-        return;
+    detectSBR(magnitudes, sampleRate) {
+        if (!this.sbrEnabled) {
+            this.sbrActive = false;
+            return;
+        }
+
+        const binSize = sampleRate / 8192; // FFT Size is 8192 (4096*2)
+
+        const refStart = Math.floor(2000 / binSize);
+        const refEnd = Math.floor(4500 / binSize);
+        const cutStart = Math.floor(8000 / binSize);
+        const cutEnd = Math.floor(12000 / binSize);
+        const highStart = Math.floor(14000 / binSize);
+        const highEnd = Math.floor(18000 / binSize);
+
+        let sumRef = 0, countRef = 0;
+        for (let i = refStart; i < refEnd && i < magnitudes.length; i++) {
+            sumRef += magnitudes[i];
+            countRef++;
+        }
+
+        let sumCut = 0, countCut = 0;
+        for (let i = cutStart; i < cutEnd && i < magnitudes.length; i++) {
+            sumCut += magnitudes[i];
+            countCut++;
+        }
+
+        let sumHigh = 0, countHigh = 0;
+        for (let i = highStart; i < highEnd && i < magnitudes.length; i++) {
+            sumHigh += magnitudes[i];
+            countHigh++;
+        }
+
+        const avgRef = countRef > 0 ? sumRef / countRef : 0.0001;
+        const avgCut = countCut > 0 ? sumCut / countCut : 0;
+        const avgHigh = countHigh > 0 ? sumHigh / countHigh : 0;
+
+        if (avgRef > 0.002) {
+            const hifiRatio = avgHigh / avgRef;
+            const cutoffRatio = avgCut / avgRef;
+
+            if (hifiRatio > 0.02) {
+                this.sbrActive = false;
+                return;
+            }
+
+            if (cutoffRatio < 0.04) {
+                this.sbrActive = true;
+            } else {
+                this.sbrActive = false;
+            }
+        }
     }
 
     processBlock(blockL, blockR, blockSize) {
-        if (!this.sbrEnabled) return;
+        if (!this.sbrEnabled || !this.sbrActive) return;
 
         const makeup = 0.8 * this.sbrUserGain;
 

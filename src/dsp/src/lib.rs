@@ -79,6 +79,10 @@ impl JuraganAudioDSP {
 
     pub fn set_sbr_options(&mut self, enabled: bool, gain: f32) {
         self.sbr.set_options(enabled, gain);
+        if !enabled {
+            self.sbr_active_timer = 0;
+            self.analysis_pos = 0; // Reset analysis buffer to be clean
+        }
     }
     
     pub fn is_sbr_active(&self) -> bool {
