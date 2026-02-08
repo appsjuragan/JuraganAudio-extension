@@ -4,7 +4,7 @@
   "collaborators": [
     "AppsJuragan inc."
   ],
-  "version": "0.1.0",
+  "version": "1.0.2",
   "files": [
     "juragan_audio_dsp_bg.wasm",
     "juragan_audio_dsp.js",
