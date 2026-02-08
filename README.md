@@ -8,11 +8,12 @@ Built on a foundation of professional DSP principles and powered by a custom **R
 
 ## 📸 Experience the Power
 
-![Main Interface](assets/ScreenShot1.png)
 *Precision EQ and Real-time Visualization*
+![Main Interface](assets/ScreenShot1.png)
 
-![Settings & Customization](assets/ScreenShot2.png)
 *Advanced Tuning and Preset Management*
+![Settings & Customization](assets/ScreenShot2.png)
+
 
 ---
 
