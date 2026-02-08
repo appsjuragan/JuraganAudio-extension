@@ -153,8 +153,12 @@ function updateWorkspace(data) { // J
         // { frequency, gain, type, q }
         // updatePresetsUI expects array of objects with {frequency, gain, q}.
         // data.eqFilters should work directly.
-        Presets.updatePresetsUI(data.presets, (name) => {
-            chrome.runtime.sendMessage({ type: "preset", preset: name });
+        Presets.updatePresetsUI(data.presets, (name, presetData) => {
+            chrome.runtime.sendMessage({
+                type: "preset",
+                preset: name,
+                presetData: presetData
+            });
             // UI update handled by re-render via updatePresetsUI logic on next status
             // But we can also proactively set input here if we want immediate feedback
             // though the function clears input.

@@ -74,27 +74,29 @@ chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
         } else if (msg.type === 'preset') {
             // Handle preset application
             if (msg.preset === 'bassBoost') {
-                // Bass boost preset - update local state
+                // Bass boost preset - update local state (Legacy)
                 const bassBoostGains = [12, 10, 8, 4, 0, 0, 0, 0, 0, 0, 0];
                 state.filters = z.map((f, i) => ({ f: f, g: bassBoostGains[i], q: H[i] }));
                 state.gain = 1;
                 const saveObj = { "GAIN": JSON.stringify(1) };
                 for (let j = 0; j < K; j++) saveObj["filter" + j] = JSON.stringify(state.filters[j]);
                 chrome.storage.local.set(saveObj);
-            } else if (state.presets[msg.preset]) {
-                // User preset - enrich message with preset data
-                msg.presetData = state.presets[msg.preset];
-                // Update local state
-                const presetData = state.presets[msg.preset];
-                state.filters = z.map((f, i) => ({
-                    f: presetData.frequencies[i] || f,
-                    g: presetData.gains[i] || 0,
-                    q: presetData.qs[i] || H[i]
-                }));
-                state.gain = (presetData.gain !== undefined) ? presetData.gain : 1;
-                const saveObj = { "GAIN": JSON.stringify(state.gain) };
-                for (let j = 0; j < K; j++) saveObj["filter" + j] = JSON.stringify(state.filters[j]);
-                chrome.storage.local.set(saveObj);
+            } else {
+                // Check if data provided in message OR found in state
+                const presetData = msg.presetData || state.presets[msg.preset];
+
+                if (presetData) {
+                    // Update local state
+                    state.filters = z.map((f, i) => ({
+                        f: presetData.frequencies[i] || f,
+                        g: presetData.gains[i] || 0,
+                        q: presetData.qs[i] || H[i]
+                    }));
+                    state.gain = (presetData.gain !== undefined) ? presetData.gain : 1;
+                    const saveObj = { "GAIN": JSON.stringify(state.gain) };
+                    for (let j = 0; j < K; j++) saveObj["filter" + j] = JSON.stringify(state.filters[j]);
+                    chrome.storage.local.set(saveObj);
+                }
             }
         }
 

@@ -117,8 +117,8 @@ function drawFilterDots(filters) {
             dotStyle = { fill: "#22d3ee", stroke: "#22d3ee" }; // Accent
         }
 
-        const dot = eqSvg.circle(filter.x, filter.y, 8)
-            .attr({ ...dotStyle, "stroke-width": 2.5, stroke: "#fff" })
+        const dot = eqSvg.circle(filter.x, filter.y, 4)
+            .attr({ ...dotStyle, "stroke-width": 1.5, stroke: "#fff", cursor: "pointer" })
             .addClass("filterDot");
 
         dot.drag(

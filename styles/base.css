@@ -4,6 +4,14 @@
     box-sizing: border-box
 }
 
+:root {
+    color-scheme: dark;
+}
+
+body.light-mode {
+    color-scheme: light;
+}
+
 body {
     margin: 0;
     background: var(--bg-void);

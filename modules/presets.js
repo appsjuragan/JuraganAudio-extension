@@ -1,37 +1,58 @@
+const z = [20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480];
+const H = [0.5, 0.55, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.4, 1.6, 0.5];
+
+const DEFAULTS = {
+    "Bass Boost": {
+        frequencies: z,
+        gains: [8, 6.5, 5, 3, 1, 0, 0, 0, 0, 0, 0],
+        qs: H,
+        gain: 1
+    },
+    "Treble": {
+        frequencies: z,
+        gains: [0, 0, 0, 0, 0, 0, 1, 3, 5, 7, 8],
+        qs: H,
+        gain: 1
+    },
+    "Loudness": {
+        frequencies: z,
+        gains: [6, 4, 3, 0, -1, -2, -1, 0, 3, 5, 7],
+        qs: H,
+        gain: 1
+    }
+};
 
 let presetsCache = {};
 
-export function updatePresetsUI(presets, onPresetClick, currentFilters, currentGain) {
-    presetsCache = presets; // Cache for export
+export function updatePresetsUI(userPresets, onPresetClick, currentFilters, currentGain) {
+    // Merge defaults (User presets override defaults if name collides)
+    const allPresets = { ...DEFAULTS, ...(userPresets || {}) };
+    presetsCache = allPresets; // Cache for export
 
     const select = document.getElementById("presetSelect");
     if (!select) return;
 
-    // Clear existing options but keep the first one if it's a placeholder
-    // Or just rebuild entirely. Let's rebuild but keep a "Select preset" placeholder
     select.innerHTML = '<option value="" disabled selected>Select preset</option>';
 
-    const keys = presets ? Object.keys(presets) : [];
+    const keys = Object.keys(allPresets);
     let matchedPreset = null;
 
     if (currentFilters && currentFilters.length > 0) {
-        // Find matching preset
         matchedPreset = keys.find(key => {
-            const p = presets[key];
-            // Compare gain (with small epsilon)
-            if (Math.abs((p.gain || 1) - (currentGain || 1)) > 0.01) return false;
+            const p = allPresets[key];
+            if (!p || !p.frequencies || !p.gains || !p.qs) return false;
 
-            // Compare filters
-            // filters is array of objects {frequency, gain, q}
-            // preset has arrays frequencies[], gains[], qs[]
-            // Length check? K=11 usually.
+            const presetGain = (p.gain !== undefined) ? p.gain : 1;
+            const liveGain = (currentGain !== undefined) ? currentGain : 1;
+            if (Math.abs(presetGain - liveGain) > 0.05) return false;
+
             if (p.frequencies.length !== currentFilters.length) return false;
 
             for (let i = 0; i < currentFilters.length; i++) {
                 const f = currentFilters[i];
-                if (Math.abs(p.frequencies[i] - f.frequency) > 1) return false; // 1Hz tol
-                if (Math.abs(p.gains[i] - f.gain) > 0.1) return false; // 0.1dB tol
-                if (Math.abs(p.qs[i] - f.q) > 0.01) return false; // 0.01 Q tol
+                if (Math.abs(p.frequencies[i] - f.frequency) > 1) return false;
+                if (Math.abs(p.gains[i] - f.gain) > 0.1) return false;
+                if (Math.abs(p.qs[i] - f.q) > 0.05) return false;
             }
             return true;
         });
@@ -40,84 +61,41 @@ export function updatePresetsUI(presets, onPresetClick, currentFilters, currentG
     keys.forEach(key => {
         const option = document.createElement("option");
         option.value = key;
-        option.innerText = key; // innerText often more reliable for display
+        option.innerText = key;
         select.appendChild(option);
     });
 
+    const input = document.getElementById("presetNameInput");
+
     if (matchedPreset) {
         select.value = matchedPreset;
-        // Also update input if matched
-        const input = document.getElementById("presetNameInput");
         if (input && document.activeElement !== input) {
             input.value = matchedPreset;
         }
     } else {
         select.value = "";
-    }
-
-    // Also check Bass Boost (hardcoded)
-    // Only if no custom preset matched? Or is Bass Boost stored as a preset?
-    // Bass Boost is a "special" preset handled in SW via hardcoding, but user can save it too.
-    // If it matches pure bass boost profile, we could show it? 
-    // But dropdown doesn't have "Bass Boost" option usually, it's a separate button.
-    // So ignore for now, focus on user presets.
-
-    // Update input based on match
-    const input = document.getElementById("presetNameInput");
-    if (input) {
-        if (matchedPreset) {
-            input.value = matchedPreset;
-            // Also ensure the placeholder is NOT selected if we found a match
-            // The loop above sets selected=true, which deselects others.
-            // But we need to make sure the placeholder isn't re-selected if no match found?
-            // "Select preset" has 'selected' attribute in HTML string.
-            // If matchedPreset found, setting option.selected = true will override.
-            // If NOT found, placeholder remains selected. Correct.
-        } else {
-            // If no match, clear input? Or assume "dirty"?
-            // User Request: "if non dirty preset, stay preset name selection...".
-            // Implies if dirty -> clear selection?
-            // Or at least show "Select preset".
+        // If no match, clear input? Or assume "dirty"?
+        // User Request: "if non dirty preset, stay preset name selection...".
+        if (input && document.activeElement !== input) {
             input.value = "";
         }
     }
 
-    // Remove old listener to avoid duplicates if this is called multiple times? 
-    // Actually, setting onchange property overwrites old one, which is safer here.
     select.onchange = () => {
         const key = select.value;
-        if (onPresetClick) onPresetClick(key);
+        const presetData = allPresets[key];
+        // Pass BOTH key and data
+        if (onPresetClick) onPresetClick(key, presetData);
 
-        // Update input box too?
         if (input) input.value = key;
     };
 }
 
 export async function exportPresets() {
     let presets = presetsCache;
-    console.log("Exporting presets, cache:", presets);
-
-    // Fallback if empty cache
+    // Fallback if empty cache (only user presets usually exported from storage, but here we export cache which helps)
     if (!presets || Object.keys(presets).length === 0) {
-        try {
-            // Access chrome storage directly?
-            // This assumes "chrome" is available globally (it is in extension)
-            if (typeof chrome !== 'undefined' && chrome.storage) {
-                const data = await chrome.storage.sync.get(null);
-                presets = {};
-                for (let key in data) {
-                    if (key.startsWith("PRESETS.")) {
-                        presets[key.slice(8)] = data[key];
-                    }
-                }
-            }
-        } catch (e) {
-            console.error("Error fetching presets for export:", e);
-        }
-    }
-
-    if (!presets || Object.keys(presets).length === 0) {
-        return false; // No presets
+        return false;
     }
 
     const blob = new Blob([JSON.stringify(presets, null, 2)], { type: "application/json" });
@@ -128,7 +106,6 @@ export async function exportPresets() {
     document.body.appendChild(a);
     a.click();
 
-    // Cleanup with delay to ensure download starts
     setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);

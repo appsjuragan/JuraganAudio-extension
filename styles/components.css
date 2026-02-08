@@ -45,6 +45,28 @@ body.light-mode #themeToggle:hover {
     background: rgba(0, 0, 0, 0.1)
 }
 
+#settingsToggle {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-main);
+    transition: all 0.2s;
+    margin-left: 4px;
+}
+
+#settingsToggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-main);
+    transform: rotate(90deg);
+}
+
 #tabNav label {
     padding: 4px 12px;
     font-size: 12px;
@@ -91,7 +113,7 @@ select,
 input {
     border-radius: var(--radius-sm);
     transition: all var(--anim-fast);
-    background: var(--input-bg);
+    background-color: var(--input-bg);
     color: var(--text-main);
     border: 1px solid var(--bg-glass-border);
     outline: none;
@@ -99,19 +121,34 @@ input {
     font-family: var(--font-family);
     font-size: 11px;
     height: 30px;
+}
+
+select {
     appearance: none;
+    -webkit-appearance: none;
+    padding-right: 28px;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22%239ca3af%22%3E%3Cpath%20d%3D%22M7%2010l5%205%205-5z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    background-size: 20px;
+    color-scheme: dark;
+}
+
+body.light-mode select {
+    color-scheme: light;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22%234b5563%22%3E%3Cpath%20d%3D%22M7%2010l5%205%205-5z%22%2F%3E%3C%2Fsvg%3E");
 }
 
 select option {
-    background: var(--dropdown-bg);
-    color: var(--text-main)
+    background-color: var(--dropdown-bg);
+    color: var(--text-main);
 }
 
 button:hover,
 select:hover,
 input:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2)
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 button:hover {

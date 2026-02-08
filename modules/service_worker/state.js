@@ -56,9 +56,42 @@ export async function initState() {
 
     const syncData = await chrome.storage.sync.get(null);
     state.presets = {};
+
+    // Default Presets
+    const defaults = {
+        "Bass Boost": {
+            frequencies: z,
+            gains: [8, 6.5, 5, 3, 1, 0, 0, 0, 0, 0, 0],
+            qs: H,
+            gain: 1
+        },
+        "Treble": {
+            frequencies: z,
+            gains: [0, 0, 0, 0, 0, 0, 1, 3, 5, 7, 8],
+            qs: H,
+            gain: 1
+        },
+        "Loudness": {
+            frequencies: z,
+            gains: [6, 4, 3, 0, -1, -2, -1, 0, 3, 5, 7],
+            qs: H,
+            gain: 1
+        }
+    };
+
+    // Load saved presets first
     for (let key in syncData) {
         if (key.startsWith(PRESETS_PREFIX)) {
             state.presets[key.slice(PRESETS_PREFIX.length)] = syncData[key];
+        }
+    }
+
+    // Merge defaults (only if not already present to allow overrides? Or just force add them?)
+    // If I want them to be "factory presets" that persist, I should add them if not present.
+    // But if user deletes "Bass Boost", it will come back. That's usually fine for "Defaults".
+    for (let key in defaults) {
+        if (!state.presets[key]) {
+            state.presets[key] = defaults[key];
         }
     }
 }
