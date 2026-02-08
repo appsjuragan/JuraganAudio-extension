@@ -112,8 +112,8 @@ impl SBRProcessor {
     pub fn new(sample_rate: f32) -> Self {
         let alpha_hpf = 0.6; // Highpass for detection
         
-        // Lowpass cutoff at 20000Hz to ensure SBR content reaches at least 18khz clearly
-        let fc = 20000.0;
+        // Lowpass cutoff at 18000Hz to avoid noisy ultra-high content.
+        let fc = 18000.0;
         let alpha_lpf = 1.0 - (-2.0 * PI * fc / sample_rate).exp();
         let synth_hp_fc = 6000.0;
         let alpha_synth_hpf = (-2.0 * PI * synth_hp_fc / sample_rate).exp();
