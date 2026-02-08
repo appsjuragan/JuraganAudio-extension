@@ -91,7 +91,7 @@ export function updatePresetsUI(userPresets, onPresetClick, currentFilters, curr
     };
 }
 
-export async function exportPresets() {
+export async function exportPresets(name) {
     let presets = presetsCache;
     // Fallback if empty cache (only user presets usually exported from storage, but here we export cache which helps)
     if (!presets || Object.keys(presets).length === 0) {
@@ -101,8 +101,9 @@ export async function exportPresets() {
     const blob = new Blob([JSON.stringify(presets, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
+    const filename = name ? `JuraganAudio_${name.replace(/\s+/g, '_')}.json` : "JuraganAudio_presets.json";
     a.href = url;
-    a.download = "juraganaudio_presets.json";
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
 

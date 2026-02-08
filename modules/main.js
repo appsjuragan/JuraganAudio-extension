@@ -276,7 +276,8 @@ function initUI() {
 
     // Export/Import
     document.getElementById("exportPresetsButton").onclick = () => {
-        Presets.exportPresets().then(success => {
+        const name = document.getElementById("presetNameInput").value.trim();
+        Presets.exportPresets(name).then(success => {
             if (!success) showMessage("No presets to export.");
         }).catch(err => {
             console.error("Export failed:", err);
