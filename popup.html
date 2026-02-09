@@ -87,6 +87,14 @@
       <button id="settingsToggle" title="Settings">
         <img src="assets/cog.svg" width="16" height="16" alt="Settings">
       </button>
+      <select id="visualizerStyleSelect" title="Visualizer style">
+        <option value="default">Default</option>
+        <option value="fancy-line">Fancy Line</option>
+        <option value="bars">Bars</option>
+        <option value="dots">Dots</option>
+        <option value="mirror-bars">Mirror Bars</option>
+        <option value="mountain">Mountain</option>
+      </select>
     </div>
   </h1>
 
@@ -98,8 +106,8 @@
       <span id="sbrIndicator" title="Spectral Band Replication active - restoring high frequencies">SBR</span>
       <svg id="gainSvg" width="30" height="300"></svg>
       <div id="eqGraphContainer">
-        <canvas id="visualizerCanvas" width="640" height="300"></canvas>
-        <svg id="eqSvg" width="640" height="300"></svg>
+        <canvas id="visualizerCanvas" width="740" height="300"></canvas>
+        <svg id="eqSvg" width="740" height="300"></svg>
       </div>
       <div id="eqOptionsDiv">
       </div>

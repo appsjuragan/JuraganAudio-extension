@@ -162,7 +162,7 @@ function drawGrid(svg) { // ae
     const step = 5;
     for (let g = EQMath.MIN_GAIN; g <= EQMath.MAX_GAIN; g += step) {
         const y = EQMath.gainToY(g);
-        svg.line(0, y, EQMath.WIDTH, y).attr({ stroke: "#9ca3af", "stroke-opacity": gridOpacity }); // Full horizontal lines
+        svg.line(-40, y, EQMath.WIDTH, y).attr({ stroke: "#9ca3af", "stroke-opacity": gridOpacity }); // Full horizontal lines
         svg.text(4, y - 2, "" + g)
             .attr({ fill: labelColor, "font-size": 8, "dominant-baseline": "auto" });
     }
