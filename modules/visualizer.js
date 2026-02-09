@@ -1,5 +1,7 @@
 const FFT_CHANNEL_NAME = 'juragan_audio_fft';
 const VISUALIZER_KEY = "SHOW_VISUALIZER";
+const VISUALIZER_STYLE_KEY = "VISUALIZER_STYLE";
+const DEFAULT_VISUALIZER_STYLE = "default";
 
 const SAMPLE_RATE = 48000;
 const WIDTH = 640;
@@ -16,8 +18,14 @@ let uniformResolution = null;
 let uniformTopColor = null;
 let uniformMidColor = null;
 let uniformBottomColor = null;
+let uniformPointSize = null;
 let lastCanvasWidth = 0;
 let lastCanvasHeight = 0;
+let currentStyle = DEFAULT_VISUALIZER_STYLE;
+
+if (typeof localStorage !== "undefined" && localStorage[VISUALIZER_STYLE_KEY]) {
+    currentStyle = localStorage[VISUALIZER_STYLE_KEY];
+}
 
 export function init(onLimiterUpdate) {
     limiterCallback = onLimiterUpdate;
@@ -60,6 +68,17 @@ export function startOrStopVisualizer() {
     }
 }
 
+export function getVisualizerStyle() {
+    return currentStyle || DEFAULT_VISUALIZER_STYLE;
+}
+
+export function setVisualizerStyle(style) {
+    if (!style) return;
+    currentStyle = style;
+    localStorage[VISUALIZER_STYLE_KEY] = style;
+    clearCanvas();
+}
+
 function P(e) {
     const c = 22050;
     let val = e / c;
@@ -86,8 +105,8 @@ export function updateVisualizer(data) {
 
     const scaleX = gl.canvas.width / WIDTH;
     const scaleY = gl.canvas.height / HEIGHT;
-    const points = buildPointArray(n, scaleX, scaleY);
-    if (points.length < 4) {
+    const points = buildSpectrumPoints(n, scaleX, scaleY);
+    if (points.length < 2) {
         clearCanvas();
         return;
     }
@@ -95,15 +114,53 @@ export function updateVisualizer(data) {
     gl.useProgram(program);
     gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, points, gl.DYNAMIC_DRAW);
     gl.uniform2f(uniformResolution, gl.canvas.width, gl.canvas.height);
 
-    gl.uniform4fv(uniformTopColor, parseColorToVec4(topColor));
-    gl.uniform4fv(uniformMidColor, parseColorToVec4(midColor));
-    gl.uniform4fv(uniformBottomColor, parseColorToVec4(bottomColor));
-
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.LINE_STRIP, 0, points.length / 2);
+
+    const baseY = HEIGHT * scaleY;
+    switch (currentStyle) {
+        case "bars": {
+            gl.uniform1f(uniformPointSize, 1);
+            setColorUniforms(topColor, midColor, bottomColor);
+            drawWithMode(buildBarsArray(points, baseY), gl.LINES);
+            break;
+        }
+        case "dots": {
+            gl.uniform1f(uniformPointSize, 5);
+            setColorUniforms(topColor, midColor, bottomColor);
+            drawWithMode(buildLineArray(points), gl.POINTS);
+            break;
+        }
+        case "mirror-bars": {
+            gl.uniform1f(uniformPointSize, 1);
+            setColorUniforms(topColor, midColor, bottomColor);
+            drawWithMode(buildMirrorBarsArray(points, baseY / 2), gl.LINES);
+            break;
+        }
+        case "mountain": {
+            gl.uniform1f(uniformPointSize, 1);
+            setColorUniforms(topColor, midColor, bottomColor);
+            drawWithMode(buildMountainArray(points, baseY), gl.TRIANGLE_STRIP);
+            break;
+        }
+        case "fancy-line": {
+            gl.uniform1f(uniformPointSize, 1);
+            setColorUniforms(topColor, midColor, bottomColor);
+            drawWithMode(buildLineArray(points), gl.LINE_STRIP);
+            gl.uniform1f(uniformPointSize, 7);
+            setColorUniforms("#f472b6", "#a855f7", "rgba(0, 0, 0, 0)");
+            drawWithMode(buildLineArray(points), gl.POINTS);
+            break;
+        }
+        case "default":
+        default: {
+            gl.uniform1f(uniformPointSize, 1);
+            setColorUniforms(topColor, midColor, bottomColor);
+            drawWithMode(buildLineArray(points), gl.LINE_STRIP);
+            break;
+        }
+    }
 }
 
 function setupGL() {
@@ -116,11 +173,13 @@ function setupGL() {
     const vertexSource = `#version 300 es
     in vec2 a_position;
     uniform vec2 u_resolution;
+    uniform float u_pointSize;
     out float v_y;
     void main() {
         vec2 zeroToOne = a_position / u_resolution;
         vec2 clip = vec2(zeroToOne.x * 2.0 - 1.0, 1.0 - zeroToOne.y * 2.0);
         v_y = zeroToOne.y;
+        gl_PointSize = u_pointSize;
         gl_Position = vec4(clip, 0.0, 1.0);
     }
     `;
@@ -162,6 +221,7 @@ function setupGL() {
     uniformTopColor = gl.getUniformLocation(program, "u_topColor");
     uniformMidColor = gl.getUniformLocation(program, "u_midColor");
     uniformBottomColor = gl.getUniformLocation(program, "u_bottomColor");
+    uniformPointSize = gl.getUniformLocation(program, "u_pointSize");
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -200,7 +260,7 @@ function clearCanvas() {
     gl.clear(gl.COLOR_BUFFER_BIT);
 }
 
-function buildPointArray(bins, scaleX, scaleY) {
+function buildSpectrumPoints(bins, scaleX, scaleY) {
     const points = [];
     for (let i = 0; i < bins.length; i++) {
         const freq = (i * SAMPLE_RATE) / (bins.length * 2);
@@ -214,9 +274,9 @@ function buildPointArray(bins, scaleX, scaleY) {
         if (db < -100) db = -100;
         if (db > 0) db = 0;
 
-        const amplitude = ((db + 100) / 100) * HEIGHT;
-        const y = (HEIGHT - amplitude) * scaleY;
-        points.push([x, y]);
+        const amplitude = ((db + 100) / 100) * HEIGHT * scaleY;
+        const y = (HEIGHT * scaleY) - amplitude;
+        points.push({ x, y, amplitude });
     }
 
     const decimated = [];
@@ -228,22 +288,75 @@ function buildPointArray(bins, scaleX, scaleY) {
             continue;
         }
         const last = decimated[decimated.length - 1];
-        if (point[0] - last[0] < threshold) {
-            if (point[1] < last[1]) {
-                last[1] = point[1];
+        if (point.x - last.x < threshold) {
+            if (point.y < last.y) {
+                last.y = point.y;
+                last.amplitude = point.amplitude;
             }
         } else {
             decimated.push(point);
         }
     }
 
-    const flat = new Float32Array(decimated.length * 2);
-    for (let i = 0; i < decimated.length; i++) {
-        flat[i * 2] = decimated[i][0];
-        flat[i * 2 + 1] = decimated[i][1];
-    }
+    return decimated;
+}
 
+function buildLineArray(points) {
+    const flat = new Float32Array(points.length * 2);
+    for (let i = 0; i < points.length; i++) {
+        flat[i * 2] = points[i].x;
+        flat[i * 2 + 1] = points[i].y;
+    }
     return flat;
+}
+
+function buildBarsArray(points, baseY) {
+    const flat = new Float32Array(points.length * 4);
+    for (let i = 0; i < points.length; i++) {
+        const offset = i * 4;
+        flat[offset] = points[i].x;
+        flat[offset + 1] = baseY;
+        flat[offset + 2] = points[i].x;
+        flat[offset + 3] = points[i].y;
+    }
+    return flat;
+}
+
+function buildMirrorBarsArray(points, centerY) {
+    const flat = new Float32Array(points.length * 4);
+    for (let i = 0; i < points.length; i++) {
+        const offset = i * 4;
+        const half = points[i].amplitude / 2;
+        flat[offset] = points[i].x;
+        flat[offset + 1] = centerY - half;
+        flat[offset + 2] = points[i].x;
+        flat[offset + 3] = centerY + half;
+    }
+    return flat;
+}
+
+function buildMountainArray(points, baseY) {
+    const flat = new Float32Array(points.length * 4);
+    for (let i = 0; i < points.length; i++) {
+        const offset = i * 4;
+        flat[offset] = points[i].x;
+        flat[offset + 1] = baseY;
+        flat[offset + 2] = points[i].x;
+        flat[offset + 3] = points[i].y;
+    }
+    return flat;
+}
+
+function drawWithMode(points, mode) {
+    if (!points || points.length === 0) return;
+    gl.bufferData(gl.ARRAY_BUFFER, points, gl.DYNAMIC_DRAW);
+    gl.drawArrays(mode, 0, points.length / 2);
+}
+
+function setColorUniforms(topColor, midColor, bottomColor) {
+    gl.uniform4fv(uniformTopColor, parseColorToVec4(topColor));
+    gl.uniform4fv(uniformMidColor, parseColorToVec4(midColor));
+    gl.uniform4fv(uniformBottomColor, parseColorToVec4(bottomColor));
 }
 
 function parseColorToVec4(color) {
