@@ -301,9 +301,22 @@ function initUI() {
 
     // Visualizer Toggle
     const vizBtn = document.getElementById("vizButton");
+    const vizStyleSelect = document.getElementById("visualizerStyleSelect");
 
     // Set initial state class
     if (Visualizer.isVisualizerOn()) vizBtn.classList.add("on");
+    if (vizStyleSelect) {
+        const savedStyle = Visualizer.getVisualizerStyle();
+        if (vizStyleSelect.querySelector(`option[value="${savedStyle}"]`)) {
+            vizStyleSelect.value = savedStyle;
+        } else {
+            vizStyleSelect.value = "default";
+            Visualizer.setVisualizerStyle("default");
+        }
+        vizStyleSelect.onchange = () => {
+            Visualizer.setVisualizerStyle(vizStyleSelect.value);
+        };
+    }
 
     vizBtn.onclick = () => {
         // MAX_PRESETS check removed
@@ -600,4 +613,3 @@ function updateSettingsUI(data) {
         document.getElementById("visualizerFpsValue").textContent = data.visualizerFps + " fps";
     }
 }
-

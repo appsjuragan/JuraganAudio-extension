@@ -116,6 +116,20 @@ body.light-mode>input#tab-3:checked~h1 #tabNav label[for="tab-3"] {
     background: rgba(255, 255, 255, 0.05)
 }
 
+#tabNav #visualizerStyleSelect {
+    height: 26px;
+    font-size: 11px;
+    padding: 0 26px 0 10px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: transparent;
+    color: var(--text-main);
+    min-width: 132px;
+}
+
+body.light-mode #tabNav #visualizerStyleSelect {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
 button,
 select,
 input {
